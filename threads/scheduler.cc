@@ -25,6 +25,10 @@
 //----------------------------------------------------------------------
 // Scheduler::Scheduler
 // 	Initialize the list of ready but not running threads to empty.
+//  Scheduler对进程状态的改变;
+//  -> Ready
+//  -> Run
+//
 //----------------------------------------------------------------------
 
 Scheduler::Scheduler()

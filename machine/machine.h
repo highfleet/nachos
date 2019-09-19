@@ -18,6 +18,13 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+//虚拟机的组成部分
+//40个寄存器 registers 包含...
+//主存 mainMemory
+//Exception Handler
+//Translation Entry TLB*
+//Translation Entry PageTable*
+
 #ifndef MACHINE_H
 #define MACHINE_H
 

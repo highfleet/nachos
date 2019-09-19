@@ -18,7 +18,7 @@
 #include "thread.h"
 #include "switch.h"
 #include "synch.h"
-#include "system.h"
+#include "system.h" 
 
 #define STACK_FENCEPOST 0xdeadbeef	// this is put at the top of the
 					// execution stack, for detecting 
@@ -83,7 +83,7 @@ Thread::~Thread()
 //	"func" is the procedure to run concurrently.
 //	"arg" is a single argument to be passed to the procedure.
 //----------------------------------------------------------------------
-
+ 
 void 
 Thread::Fork(VoidFunctionPtr func, void *arg)
 {
@@ -155,7 +155,7 @@ Thread::Finish ()
 
 //----------------------------------------------------------------------
 // Thread::Yield
-// 	Relinquish the CPU if any other thread is ready to run.
+// 	Relinquish the                                                                                                                                                                                                                                  CPU if any other thread is ready to run.
 //	If so, put the thread on the end of the ready list, so that
 //	it will eventually be re-scheduled.
 //
@@ -213,6 +213,7 @@ Thread::Sleep ()
 {
     Thread *nextThread;
     
+    // 只能睡当前正在RUNNING的进程
     ASSERT(this == currentThread);
     ASSERT(interrupt->getLevel() == IntOff);
     

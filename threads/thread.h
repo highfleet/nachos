@@ -56,6 +56,8 @@
 #define StackSize	(4 * 1024)	// in words
 
 
+// 进程的四个状态
+// 
 // Thread state
 enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED };
 

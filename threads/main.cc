@@ -51,6 +51,8 @@
 #undef MAIN
 
 #include "utility.h"
+// 所有的系统模块类 声明都在sys.cc
+
 #include "system.h"
 
 #ifdef THREADS
@@ -63,6 +65,9 @@ extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
 extern void Print(char *file), PerformanceTest(void);
 extern void StartProcess(char *file), ConsoleTest(char *in, char *out);
 extern void MailTest(int networkID);
+
+// 测试用第三方c++程序
+extern void SayHello();
 
 //----------------------------------------------------------------------
 // main
@@ -85,6 +90,8 @@ main(int argc, char **argv)
 					// for a particular command
 
     DEBUG('t', "Entering main");
+
+	// 初始化操作系统!
     (void) Initialize(argc, argv);
     
 #ifdef THREADS
@@ -104,7 +111,11 @@ main(int argc, char **argv)
     ThreadTest();
 #endif
 
-    for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
+#ifdef SAYHELLO
+	SayHello();
+#endif
+
+	for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
 	argCount = 1;
         if (!strcmp(*argv, "-z"))               // print copyright
             printf (copyright);

@@ -5,6 +5,13 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+//操作系统的组成部分
+// NETWORK
+//
+//
+//
+//
+
 #include "copyright.h"
 #include "system.h"
 
