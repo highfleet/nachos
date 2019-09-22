@@ -88,6 +88,7 @@ class Thread {
 					// NOTE -- thread being deleted
 					// must not be running when delete 
 					// is called
+          // 问题：谁会调用Thread 的析构函数呢?
 
     // basic thread operations
 

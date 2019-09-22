@@ -20,6 +20,8 @@
 #include "synch.h"
 #include "system.h" 
 
+//1 为什么ReadyToRun禁止中断
+
 #define STACK_FENCEPOST 0xdeadbeef	// this is put at the top of the
 					// execution stack, for detecting 
 					// stack overflows
@@ -53,6 +55,7 @@ Thread::Thread(char* threadName)
 //      NOTE: if this is the main thread, we can't delete the stack
 //      because we didn't allocate it -- we got it automatically
 //      as part of starting up Nachos.
+//      由 Scheduler::Run 调用
 //----------------------------------------------------------------------
 
 Thread::~Thread()
@@ -118,6 +121,7 @@ Thread::CheckOverflow()
 {
     if (stack != NULL)
 #ifdef HOST_SNAKE			// Stacks grow upward on the Snakes
+    //  这个SNAKES就是逊啦
 	ASSERT(stack[StackSize - 1] == STACK_FENCEPOST);
 #else
 	ASSERT((int) *stack == (int) STACK_FENCEPOST);
@@ -137,9 +141,11 @@ Thread::CheckOverflow()
 //
 // 	NOTE: we disable interrupts, so that we don't get a time slice 
 //	between setting threadToBeDestroyed, and going to sleep.
+//  如果发生了的话 相当于删除一个Running进程
 //----------------------------------------------------------------------
 
-//
+//  Finish 的进程一定会被Run检测到
+//  因为这个进程是当前Running的进程
 void
 Thread::Finish ()
 {
@@ -255,14 +261,22 @@ Thread::StackAllocate (VoidFunctionPtr func, void *arg)
 {
     stack = (int *) AllocBoundedArray(StackSize * sizeof(int));
 
+
+//  HOST_SNAKE
+//  FrameMarker是什么?
+//  
 #ifdef HOST_SNAKE
     // HP stack works from low addresses to high addresses
     stackTop = stack + 16;	// HP requires 64-byte frame marker
+
+    // 栈最大能达到的地址
     stack[StackSize - 1] = STACK_FENCEPOST;
 #else
+    // 这才是正宗的栈 High —> Low Address  
     // i386 & MIPS & SPARC stack works from high addresses to low addresses
 #ifdef HOST_SPARC
     // SPARC stack must contains at least 1 activation record to start with.
+    // 
     stackTop = stack + StackSize - 96;
 #else  // HOST_MIPS  || HOST_i386
     stackTop = stack + StackSize - 4;	// -4 to be on the safe side!
@@ -275,6 +289,7 @@ Thread::StackAllocate (VoidFunctionPtr func, void *arg)
 #endif
 #endif  // HOST_SPARC
     *stack = STACK_FENCEPOST;
+    //  防止栈底溢出
 #endif  // HOST_SNAKE
     
     machineState[PCState] = (int*)ThreadRoot;
