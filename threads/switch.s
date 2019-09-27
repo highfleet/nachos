@@ -108,6 +108,9 @@ SWITCH:
 	.end SWITCH
 #endif // HOST_MIPS
 
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+
 #ifdef HOST_SPARC
 
 /* NOTE!  These files appear not to exist on Solaris --
@@ -183,6 +186,9 @@ SWITCH:
 	restore
 
 #endif // HOST_SPARC
+
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
 
 #ifdef HOST_SNAKE
 
@@ -265,6 +271,9 @@ SWITCH
 
 #endif
 
+/*----------------------------------------------------------------------------*/
+/*----------------------------------------------------------------------------*/
+
 #ifdef HOST_i386
 
         .text
@@ -280,6 +289,7 @@ SWITCH
 **      esi     points to thread function
 **      edi     point to Thread::Finish()
 */
+/* 第一次被调度上CPU的时候被执行 */
 ThreadRoot:
         pushl   %ebp
         movl    %esp,%ebp
@@ -298,6 +308,7 @@ ThreadRoot:
 /* void SWITCH( thread *t1, thread *t2 )
 **
 ** on entry, stack looks like this:
+**		当然 这里参数压栈是反着来的
 **      8(esp)  ->              thread *t2
 **      4(esp)  ->              thread *t1
 **       (esp)  ->              return address

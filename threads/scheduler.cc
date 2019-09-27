@@ -26,9 +26,6 @@
 // Scheduler::Scheduler
 // 	Initialize the list of ready but not running threads to empty.
 //  Scheduler对进程状态的改变;
-//  -> Ready
-//  -> Run
-//
 //----------------------------------------------------------------------
 
 Scheduler::Scheduler()
@@ -89,6 +86,13 @@ Scheduler::FindNextToRun ()
 //	The global variable currentThread becomes nextThread.
 //
 //	"nextThread" is the thread to be put into the CPU.
+//  记录了当前进程currentThread
+//  切换上下文 包括:{
+//      页表和页表大小,
+//      所有寄存器(使用汇编语言,在SWITCH中实现),***
+//      清理上一个进程,
+
+//  }
 //----------------------------------------------------------------------
 
 void
@@ -129,10 +133,12 @@ Scheduler::Run (Thread *nextThread)
         delete threadToBeDestroyed;
 	threadToBeDestroyed = NULL;
     }
-    
+
 #ifdef USER_PROGRAM
     if (currentThread->space != NULL) {		// if there is an address space
+        //  这是在回复用户寄存器...
         currentThread->RestoreUserState();     // to restore, do it.
+    //  这是在恢复页表和页表大小
 	currentThread->space->RestoreState();
     }
 #endif
@@ -148,4 +154,18 @@ Scheduler::Print()
 {
     printf("Ready list contents:\n");
     readyList->Mapcar((VoidFunctionPtr) ThreadPrint);
+}
+
+
+
+//----------------------------------------------------------------------
+// Scheduler::PrintAllThreads
+// 打印全部正在运行的进程! 经由TS命令调用
+// 具体是把Current 和 ReadyList 的进程打印一下...
+//----------------------------------------------------------------------
+void
+Scheduler::PrintAllThreads()
+{
+    currentThread->PrintInfo();
+    readyList->Mapcar((VoidFunctionPtr)ThreadPrintInfo);
 }

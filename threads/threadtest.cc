@@ -36,6 +36,12 @@ SimpleThread(int which)
     }
 }
 
+void SimpleNonstopThread(int args){
+    while(true){
+        currentThread->Yield();
+    }
+}
+
 //----------------------------------------------------------------------
 // ThreadTest1
 // 	Set up a ping-pong between two threads, by forking a thread 
@@ -54,6 +60,31 @@ ThreadTest1()
 }
 
 //----------------------------------------------------------------------
+// ThreadTest2
+// 	测试一下最大线程数量的限制
+//	Called by defining TS 
+//----------------------------------------------------------------------
+
+void
+ThreadTest2()
+{
+    DEBUG('t', "Entering ThreadTest2");
+
+    for (int i = 1; i < MaxThreadNum;i++){
+        Thread *t = new Thread(" Test Thread " );
+        t->Fork(SimpleNonstopThread, NULL);
+    }
+
+    // Call TS Function
+    scheduler->PrintAllThreads();
+
+    // Invoke ASSERT
+    Thread *t = new Thread(" Test Thread " );
+
+    // Shoule never reach here
+}
+
+//----------------------------------------------------------------------
 // ThreadTest
 // 	Invoke a test routine.
 //----------------------------------------------------------------------
@@ -63,11 +94,14 @@ ThreadTest()
 {
     switch (testnum) {
     case 1:
-	ThreadTest1();
-	break;
+        ThreadTest1();
+        break;
+    case 2:
+        ThreadTest2();
+        break;
     default:
-	printf("No test specified.\n");
-	break;
+	    printf("No test specified.\n");
+	    break;
     }
 }
 

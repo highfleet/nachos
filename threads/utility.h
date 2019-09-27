@@ -48,6 +48,8 @@
 // This is used by Thread::Fork and for interrupt handlers, as well
 // as a couple of other places.
 
+// 注意这个函数指针的typedef方式!
+// void(int)
 typedef void (*VoidFunctionPtr)(int arg); 
 typedef void (*VoidNoArgFunctionPtr)(); 
 

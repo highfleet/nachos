@@ -56,13 +56,16 @@
 #define StackSize	(4 * 1024)	// in words
 
 
+
 // 进程的四个状态
 // 
 // Thread state
 enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED };
 
+
 // external function, dummy routine whose sole job is to call Thread::Print
-extern void ThreadPrint(int arg);	 
+extern void ThreadPrint(int arg);
+extern void ThreadPrintInfo(int ptr);
 
 // The following class defines a "thread control block" -- which
 // represents a single thread of execution.
@@ -81,6 +84,10 @@ class Thread {
     // THEY MUST be in this position for SWITCH to work.
     int* stackTop;			 // the current stack pointer
     void *machineState[MachineStateSize];  // all registers except for stackTop
+
+    // 用户ID和线程ID 私有成员变量
+    int uid;
+    int tid;
 
   public:
     Thread(char* debugName);		// initialize a Thread 
@@ -103,7 +110,14 @@ class Thread {
 						// overflowed its stack
     void setStatus(ThreadStatus st) { status = st; }
     char* getName() { return (name); }
+    
     void Print() { printf("%s, ", name); }
+
+    int getTid() { return tid; }
+    int getUid() { return uid; }
+
+    // 1分钟之内 我要这个进程的所有信息.jpg
+    void PrintInfo();
 
   private:
     // some of the private data for this class is listed above
@@ -118,10 +132,13 @@ class Thread {
     					// Allocate a stack for thread.
 					// Used internally by Fork()
 
+    int TidAllocate();
+
 #ifdef USER_PROGRAM
 // A thread running a user program actually has *two* sets of CPU registers -- 
 // one for its state while executing user code, one for its state 
 // while executing kernel code.
+// 注意这里 为什么一个运行用户程序的线程需要有两套寄存器? 
 
     int userRegisters[NumTotalRegs];	// user-level CPU register state
 

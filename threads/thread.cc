@@ -32,6 +32,10 @@
 //	Thread::Fork.
 //
 //	"threadName" is an arbitrary string, useful for debugging.
+//
+//  如果要分配tid的话 在构造函数中 还是在fork中比较好呢
+//  在目前的nachos机制上 我并没有没有发现以上有所区别
+//  暂且决定在这里吧
 //----------------------------------------------------------------------
 
 Thread::Thread(char* threadName)
@@ -40,6 +44,18 @@ Thread::Thread(char* threadName)
     stackTop = NULL;
     stack = NULL;
     status = JUST_CREATED;
+
+
+    //nachos还没有多用户机制 暂且认为都在0号用户下
+
+    //超过线程上限,报错..
+    DEBUG('t', "Creating a new thread");
+
+    ASSERT(currentThreadNum < MaxThreadNum);
+
+    uid = 0;
+    tid = TidAllocate();
+
 #ifdef USER_PROGRAM
     space = NULL;
 #endif
@@ -56,6 +72,7 @@ Thread::Thread(char* threadName)
 //      because we didn't allocate it -- we got it automatically
 //      as part of starting up Nachos.
 //      由 Scheduler::Run 调用
+//
 //----------------------------------------------------------------------
 
 Thread::~Thread()
@@ -63,6 +80,11 @@ Thread::~Thread()
     DEBUG('t', "Deleting thread \"%s\"\n", name);
 
     ASSERT(this != currentThread);
+
+    // 释放TID
+    TidPool[tid] = 0;
+    currentThreadNum--;
+
     if (stack != NULL)
 	DeallocBoundedArray((char *) stack, StackSize * sizeof(int));
 }
@@ -160,7 +182,8 @@ Thread::Finish ()
 }
 
 //----------------------------------------------------------------------
-// Thread::Yield
+//  礼让是一种中华民族的传统美德~~
+//  Thread::Yield
 // 	Relinquish the                                                                                                                                                                                                                                  CPU if any other thread is ready to run.
 //	If so, put the thread on the end of the ready list, so that
 //	it will eventually be re-scheduled.
@@ -194,6 +217,7 @@ Thread::Yield ()
     }
     (void) interrupt->SetLevel(oldLevel);
 }
+
 
 //----------------------------------------------------------------------
 // Thread::Sleep
@@ -243,6 +267,7 @@ Thread::Sleep ()
 static void ThreadFinish()    { currentThread->Finish(); }
 static void InterruptEnable() { interrupt->Enable(); }
 void ThreadPrint(int arg){ Thread *t = (Thread *)arg; t->Print(); }
+void ThreadPrintInfo(int ptr) { Thread *t = (Thread *)ptr; t->PrintInfo(); }
 
 //----------------------------------------------------------------------
 // Thread::StackAllocate
@@ -292,6 +317,7 @@ Thread::StackAllocate (VoidFunctionPtr func, void *arg)
     //  防止栈底溢出
 #endif  // HOST_SNAKE
     
+    //  所有机器状态寄存器的初始化
     machineState[PCState] = (int*)ThreadRoot;
     machineState[StartupPCState] = (int*)InterruptEnable;
     machineState[InitialPCState] = (int*)func;
@@ -334,3 +360,35 @@ Thread::RestoreUserState()
 	machine->WriteRegister(i, userRegisters[i]);
 }
 #endif
+
+
+//----------------------------------------------------------------------
+//  (就模仿一下你这zz的代码风格...
+//  分配第一个空闲ID
+//----------------------------------------------------------------------
+int
+Thread::TidAllocate ()
+{
+    ASSERT(currentThreadNum < MaxThreadNum);
+
+    currentThreadNum += 1;
+    for (int i = 0; i < currentThreadNum; i++)
+        if(!TidPool[i]){
+            TidPool[i] = 1;
+            return i;
+        }
+}
+
+
+//----------------------------------------------------------------------
+//  是Thread::Print的强化版本
+//  urara
+//----------------------------------------------------------------------
+
+void 
+Thread::PrintInfo()
+{
+    char *status_name[] = {"JUST CREATED", "RUNNING", "READY", "BLOCKED"};
+    printf("%s      %s      uid: %d     tid: %d\n", name, status_name[(int)status], uid, tid);
+
+}

@@ -95,16 +95,20 @@ main(int argc, char **argv)
     (void) Initialize(argc, argv);
     
 #ifdef THREADS
+//	增加了TS命令参数...
     for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount) {
       argCount = 1;
       switch (argv[0][1]) {
       case 'q':
-        testnum = atoi(argv[1]);
-        argCount++;
-        break;
-      default:
-        testnum = 1;
-        break;
+		  testnum = atoi(argv[1]);
+		  argCount++;
+		  break;
+	  case 'S':
+		  testnum = 2;
+		  break;
+	  default:
+		  testnum = 1;
+		  break;
       }
     }
 

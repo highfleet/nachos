@@ -6,14 +6,13 @@
 // of liability and disclaimer of warranty provisions.
 
 //操作系统的组成部分
-// NETWORK
-//
-//
-//
-//
+//初始化 创建主进程...
 
 #include "copyright.h"
 #include "system.h"
+
+int currentThreadNum;
+bool TidPool[MaxThreadNum];
 
 // This defines *all* of the global data structures used by Nachos.
 // These are all initialized and de-allocated by this file.
@@ -145,9 +144,14 @@ Initialize(int argc, char **argv)
 
     threadToBeDestroyed = NULL;
 
+    // 在主线程main创建前 初始化下线程描述符池...!
+    for (int i = 0; i < MaxThreadNum;i++)
+        TidPool[i] = 0;
+    currentThreadNum = 0;
+
     // We didn't explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a Thread
-    // object to save its state. 
+    // object to save its state.
     currentThread = new Thread("main");		
     currentThread->setStatus(RUNNING);
 
