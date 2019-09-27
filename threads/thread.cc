@@ -45,7 +45,6 @@ Thread::Thread(char* threadName)
     stack = NULL;
     status = JUST_CREATED;
 
-
     //nachos还没有多用户机制 暂且认为都在0号用户下
 
     //超过线程上限,报错..
@@ -53,8 +52,15 @@ Thread::Thread(char* threadName)
 
     ASSERT(currentThreadNum < MaxThreadNum);
 
+
+    IntStatus oldLevel = interrupt->SetLevel(IntOff);
+
+    // 由于
     uid = 0;
     tid = TidAllocate();
+    
+    (void) interrupt->SetLevel(oldLevel);
+
 
 #ifdef USER_PROGRAM
     space = NULL;
@@ -81,9 +87,13 @@ Thread::~Thread()
 
     ASSERT(this != currentThread);
 
-    // 释放TID
+
+    // 释放TID 
     TidPool[tid] = 0;
     currentThreadNum--;
+
+
+
 
     if (stack != NULL)
 	DeallocBoundedArray((char *) stack, StackSize * sizeof(int));
