@@ -50,7 +50,7 @@ Timer::Timer(VoidFunctionPtr timerHandler, int callArg, bool doRandom)
     // schedule the first interrupt from the timer device
     interrupt->Schedule(TimerHandler, (int) this, TimeOfNextInterrupt(), 
 		TimerInt); 
-}
+} 
 
 //----------------------------------------------------------------------
 // Timer::TimerExpired

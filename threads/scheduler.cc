@@ -49,6 +49,8 @@ Scheduler::~Scheduler()
 //	Put it on the ready list, for later scheduling onto the CPU.
 //
 //	"thread" is the thread to be put on the ready list.
+//
+//  
 //----------------------------------------------------------------------
 
 void
@@ -57,7 +59,17 @@ Scheduler::ReadyToRun (Thread *thread)
     DEBUG('t', "Putting thread %s on ready list.\n", thread->getName());
 
     thread->setStatus(READY);
+
+#ifdef PRIORITY
+    // 带优先级的插入 随时保持顺序..
+    readyList->SortedInsert((void *)thread, thread->getPriority());
+    
+#else
+    // Append将线程插入列表末端
     readyList->Append((void *)thread);
+    
+#endif
+    
 }
 
 //----------------------------------------------------------------------
@@ -71,6 +83,7 @@ Scheduler::ReadyToRun (Thread *thread)
 Thread *
 Scheduler::FindNextToRun ()
 {
+    // 返回链表最前的元素
     return (Thread *)readyList->Remove();
 }
 
@@ -91,7 +104,6 @@ Scheduler::FindNextToRun ()
 //      页表和页表大小,
 //      所有寄存器(使用汇编语言,在SWITCH中实现),***
 //      清理上一个进程,
-
 //  }
 //----------------------------------------------------------------------
 
@@ -129,6 +141,8 @@ Scheduler::Run (Thread *nextThread)
     // we need to delete its carcass.  Note we cannot delete the thread
     // before now (for example, in Thread::Finish()), because up to this
     // point, we were still running on the old thread's stack!
+    // 唔唔 在切换之前 你始终Running on oldstack...
+    // 这说明nachos不会在进程切换时陷入内核
     if (threadToBeDestroyed != NULL) {
         delete threadToBeDestroyed;
 	threadToBeDestroyed = NULL;

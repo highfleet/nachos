@@ -12,7 +12,7 @@
 //	only when the following occur: 
 //		interrupts are re-enabled
 //		a user instruction is executed
-//		there is nothing in the ready queue
+//		there is nothing in the ready queue（IDLE）
 //
 //  DO NOT CHANGE -- part of the machine emulation
 //
@@ -138,6 +138,9 @@ Interrupt::Enable()
     (void) SetLevel(IntOn); 
 }
 
+
+// 谁会调用OneTick? 或者说 谁在不停地接受中断?
+// 在遥远的mipssim中 是硬件模拟器在不停调用OneTick
 //----------------------------------------------------------------------
 // Interrupt::OneTick
 // 	Advance simulated time and check if there are any pending 
@@ -147,6 +150,7 @@ Interrupt::Enable()
 //		interrupts are re-enabled
 //		a user instruction is executed
 //----------------------------------------------------------------------
+
 void
 Interrupt::OneTick()
 {
@@ -166,6 +170,8 @@ Interrupt::OneTick()
     ChangeLevel(IntOn, IntOff);		// first, turn off interrupts
 					// (interrupt handlers run with
 					// interrupts disabled)
+
+    // 处理所有的DuePendingInterrupt
     while (CheckIfDue(FALSE))		// check for pending interrupts
 	;
     ChangeLevel(IntOff, IntOn);		// re-enable interrupts

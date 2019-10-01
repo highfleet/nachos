@@ -69,7 +69,7 @@ List::~List()
 //	Allocate a ListElement to keep track of the item.
 //      If the list is empty, then this will be the only element.
 //	Otherwise, put it at the end.
-//
+//  
 //	"item" is the thing to put on the list, it can be a pointer to 
 //		anything.
 //----------------------------------------------------------------------

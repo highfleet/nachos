@@ -288,8 +288,12 @@ SWITCH
 **      edx     contains inital argument to thread function
 **      esi     points to thread function
 **      edi     point to Thread::Finish()
+**
+**	进程初始化时被设为PC
+**
 */
-/* 第一次被调度上CPU的时候被执行 */
+
+/
 ThreadRoot:
         pushl   %ebp
         movl    %esp,%ebp
@@ -316,7 +320,11 @@ ThreadRoot:
 ** we push the current eax on the stack so that we can use it as
 ** a pointer to t1, this decrements esp by 4, so when we use it
 ** to reference stuff on the stack, we add 4 to the offset.
+**
 */
+/* 关于栈指针ESP和返回地址PC */
+/* ESP是栈指针，0(ESP)中存储了PC */
+
         .comm   _eax_save,4
 
         .globl  SWITCH

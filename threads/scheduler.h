@@ -9,6 +9,9 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
+// Lab2 基于优先级调度的Def
+#define PRIORITY
+
 #include "copyright.h"
 #include "list.h"
 #include "thread.h"

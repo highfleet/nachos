@@ -55,15 +55,17 @@
 // WATCH OUT IF THIS ISN'T BIG ENOUGH!!!!!
 #define StackSize	(4 * 1024)	// in words
 
-
+// 线程优先级范围0-5
+#define maxPriority 0
+#define minPriority 5
 
 // 进程的四个状态
-// 
 // Thread state
 enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED };
 
 
 // external function, dummy routine whose sole job is to call Thread::Print
+// dummy function because C++ does not allow pointers to member functions
 extern void ThreadPrint(int arg);
 extern void ThreadPrintInfo(int ptr);
 
@@ -89,13 +91,15 @@ class Thread {
     int uid;
     int tid;
 
+    int priority;
+
   public:
-    Thread(char* debugName);		// initialize a Thread 
+    Thread(char* debugName, int priorityLevel = minPriority);		// initialize a Thread 
     ~Thread(); 				// deallocate a Thread
 					// NOTE -- thread being deleted
 					// must not be running when delete 
 					// is called
-          // 问题：谁会调用Thread 的析构函数呢?
+          // 在Finish后 由Scheduler调用
 
     // basic thread operations
 
@@ -110,7 +114,10 @@ class Thread {
 						// overflowed its stack
     void setStatus(ThreadStatus st) { status = st; }
     char* getName() { return (name); }
-    
+
+    int setPriority(int val);
+    int getPriority() { return priority; }
+
     void Print() { printf("%s, ", name); }
 
     int getTid() { return tid; }

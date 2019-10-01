@@ -20,7 +20,7 @@
 #include "synch.h"
 #include "system.h" 
 
-//1 为什么ReadyToRun禁止中断
+
 
 #define STACK_FENCEPOST 0xdeadbeef	// this is put at the top of the
 					// execution stack, for detecting 
@@ -32,13 +32,16 @@
 //	Thread::Fork.
 //
 //	"threadName" is an arbitrary string, useful for debugging.
-//
+//  
+//  Lab1
 //  如果要分配tid的话 在构造函数中 还是在fork中比较好呢
 //  在目前的nachos机制上 我并没有没有发现以上有所区别
 //  暂且决定在这里吧
+//  Lab2
+//  增加了初始化优先级的参数 默认为最低
 //----------------------------------------------------------------------
 
-Thread::Thread(char* threadName)
+Thread::Thread(char* threadName, int priorityLevel = minPriority)
 {
     name = threadName;
     stackTop = NULL;
@@ -55,10 +58,12 @@ Thread::Thread(char* threadName)
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
 
-    // 由于
+
     uid = 0;
     tid = TidAllocate();
-    
+
+    priority = priorityLevel;
+
     (void) interrupt->SetLevel(oldLevel);
 
 
@@ -91,9 +96,6 @@ Thread::~Thread()
     // 释放TID 
     TidPool[tid] = 0;
     currentThreadNum--;
-
-
-
 
     if (stack != NULL)
 	DeallocBoundedArray((char *) stack, StackSize * sizeof(int));
@@ -201,13 +203,21 @@ Thread::Finish ()
 //	NOTE: returns immediately if no other thread on the ready queue.
 //	Otherwise returns when the thread eventually works its way
 //	to the front of the ready list and gets re-scheduled.
-//
+//  当前进程返回的时候 已经过了一个周期了
+//  "怀旧空吟闻笛赋，到乡翻似烂柯人"
 //	NOTE: we disable interrupts, so that looking at the thread
 //	on the front of the ready list, and switching to it, can be done
 //	atomically.  On return, we re-set the interrupt level to its
 //	original state, in case we are called with interrupts disabled. 
 //
 // 	Similar to Thread::Sleep(), but a little different.
+//
+//  Lab2
+//  抢占式调度:
+//  现将currentThread加入ReadyList
+//  因为它可能依然是优先级最高的...!
+//
+//
 //----------------------------------------------------------------------
 
 void
@@ -219,12 +229,18 @@ Thread::Yield ()
     ASSERT(this == currentThread);
     
     DEBUG('t', "Yielding thread \"%s\"\n", getName());
-    
+
+#ifdef PRIORITY
+    scheduler->ReadyToRun(this);
+    nextThread = scheduler->FindNextToRun();
+    scheduler->Run(nextThread);
+#else
     nextThread = scheduler->FindNextToRun();
     if (nextThread != NULL) {
 	scheduler->ReadyToRun(this);
 	scheduler->Run(nextThread);
     }
+#endif
     (void) interrupt->SetLevel(oldLevel);
 }
 
@@ -399,6 +415,30 @@ void
 Thread::PrintInfo()
 {
     char *status_name[] = {"JUST CREATED", "RUNNING", "READY", "BLOCKED"};
-    printf("%s      %s      uid: %d     tid: %d\n", name, status_name[(int)status], uid, tid);
+    char str[100] = {' '};
+    sprintf(str, "%s", name);
+    sprintf(str + 20, status_name[status]);
+    sprintf(str + 35, "[TID]%d", tid);
+    sprintf(str + 50, "[UID]%d", uid);
+    for (int i = 0; i < 50;i++)
+        if(str[i]==0)
+            str[i] = ' ';
 
+    printf(str);
+    puts("");
+}
+//----------------------------------------------------------------------
+//  设置线程优先级
+//  0-5
+//  暂时没用 因为改变后需要重排ReadyList...!
+//----------------------------------------------------------------------
+
+int
+Thread::setPriority(int val)
+{
+    if (val < maxPriority || val > minPriority)
+        return -1;
+
+    priority = val;
+    return 0;
 }

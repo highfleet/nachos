@@ -289,6 +289,7 @@ ThreadRoot:
         call    *WhenDonePC
 
         // NOT REACHED
+		// 因为WhendonePC会调用Finish 紧接着线程就会被删除..
         movl    %ebp,%esp
         popl    %ebp
         ret
@@ -306,6 +307,9 @@ ThreadRoot:
 ** a pointer to t1, this decrements esp by 4, so when we use it
 ** to reference stuff on the stack, we add 4 to the offset.
 */
+
+/* 关于栈指针ESP和返回地址PC */
+/* ESP是栈指针，0(ESP)中存储了PC */
         .comm   _eax_save,4
 
         .globl  SWITCH

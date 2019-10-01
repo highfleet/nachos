@@ -36,11 +36,15 @@ SimpleThread(int which)
     }
 }
 
-void SimpleNonstopThread(int args){
+void 
+SimpleNonstopThread(int args)
+{
     while(true){
-        currentThread->Yield();
+        
     }
 }
+
+
 
 //----------------------------------------------------------------------
 // ThreadTest1
@@ -71,7 +75,7 @@ ThreadTest2()
     DEBUG('t', "Entering ThreadTest2");
 
     for (int i = 1; i < MaxThreadNum;i++){
-        Thread *t = new Thread(" Test Thread " );
+        Thread *t = new Thread("Test Thread " );
         t->Fork(SimpleNonstopThread, NULL);
     }
 
@@ -79,9 +83,27 @@ ThreadTest2()
     scheduler->PrintAllThreads();
 
     // Invoke ASSERT
-    Thread *t = new Thread(" Test Thread " );
+    Thread *t = new Thread("Test Thread " );
 
     // Shoule never reach here
+}
+
+//----------------------------------------------------------------------
+// ThreadTest3
+// 	用于测试基于优先级的抢占式调度
+//	...
+//----------------------------------------------------------------------
+
+void
+ThreadTest3()
+{
+    DEBUG('t', "Entering ThreadTest3");
+
+    for (int i = 0; i <= 5;i++){
+        Thread *t = new Thread("Test Thread ",5-i );
+        t->Fork(SimpleThread,(void*)i);
+    }
+
 }
 
 //----------------------------------------------------------------------
@@ -99,8 +121,11 @@ ThreadTest()
     case 2:
         ThreadTest2();
         break;
+    case 3:
+        ThreadTest3();
+        break;
     default:
-	    printf("No test specified.\n");
+        printf("No test specified.\n");
 	    break;
     }
 }
