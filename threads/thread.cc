@@ -66,6 +66,8 @@ Thread::Thread(char* threadName, int priorityLevel = minPriority)
 
     (void) interrupt->SetLevel(oldLevel);
 
+    time_used = 0;
+
 
 #ifdef USER_PROGRAM
     space = NULL;
@@ -230,10 +232,21 @@ Thread::Yield ()
     
     DEBUG('t', "Yielding thread \"%s\"\n", getName());
 
-#ifdef PRIORITY
+#if PRIORITY
     scheduler->ReadyToRun(this);
     nextThread = scheduler->FindNextToRun();
     scheduler->Run(nextThread);
+#elif RR
+    // 如果时间片超了 就把线程放到末尾
+    // 如果还有剩余的时间片 或者是唯一一个就绪进程 就立即返回...
+    currentThread->last_tick = stats->systemTicks;
+
+    nextThread = scheduler->FindNextToRun();
+    if(nextThread!=NULL){
+        scheduler->ReadyToRun(this);
+        scheduler->Run(nextThread);
+    }
+    
 #else
     nextThread = scheduler->FindNextToRun();
     if (nextThread != NULL) {
@@ -442,3 +455,4 @@ Thread::setPriority(int val)
     priority = val;
     return 0;
 }
+

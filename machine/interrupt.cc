@@ -155,8 +155,8 @@ void
 Interrupt::OneTick()
 {
     MachineStatus old = status;
-
-// advance simulated time
+    //printf("current systick %d\n", stats->totalTicks);
+    // advance simulated time
     if (status == SystemMode) {
         stats->totalTicks += SystemTick;
 	stats->systemTicks += SystemTick;

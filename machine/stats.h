@@ -57,4 +57,7 @@ class Statistics {
 #define NetworkTime 	100   	// time to send or receive one packet
 #define TimerTicks 	100    	// (average) time between timer interrupts
 
+// 时间片轮转
+#define TimeSlice 200
+
 #endif // STATS_H
