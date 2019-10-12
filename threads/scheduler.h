@@ -9,9 +9,12 @@
 #ifndef SCHEDULER_H
 #define SCHEDULER_H
 
+<<<<<<< Updated upstream
 // Lab2 基于优先级调度的Def
 #define PRIORITY
 
+=======
+>>>>>>> Stashed changes
 #include "copyright.h"
 #include "list.h"
 #include "thread.h"
@@ -22,6 +25,8 @@
 
 class Scheduler {
   public:
+    List *AllThreads;
+
     Scheduler();			// Initialize list of ready threads 
     ~Scheduler();			// De-allocate ready list
 
@@ -36,7 +41,6 @@ class Scheduler {
   private:
     List *readyList;  		// queue of threads that are ready to run,
 				// but not running
-
     
 };
 

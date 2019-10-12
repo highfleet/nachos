@@ -68,11 +68,12 @@ Semaphore::P()
     
     while (value == 0) { 			// semaphore not available
 	queue->Append((void *)currentThread);	// so go to sleep
-	currentThread->Sleep();
+	// 让线程进入BLOCKED（仅有V才能将它唤醒）
+    currentThread->Sleep();
     } 
     value--; 					// semaphore available, 
 						// consume its value
-    
+                        
     (void) interrupt->SetLevel(oldLevel);	// re-enable interrupts
 }
 
