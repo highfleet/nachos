@@ -65,6 +65,7 @@ extern void Cleanup();
 //
 //	"dummy" is because every interrupt handler takes one argument,
 //		whether it needs it or not.
+//  时钟中断处理函数
 //----------------------------------------------------------------------
 static void
 TimerInterruptHandler(int dummy)
@@ -165,6 +166,8 @@ Initialize(int argc, char **argv)
     for (int i = 0; i < MaxThreadNum;i++)
         TidPool[i] = 0;
     currentThreadNum = 0;
+
+   
 
     // We didn't explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a Thread

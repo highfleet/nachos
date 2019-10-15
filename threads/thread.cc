@@ -20,8 +20,6 @@
 #include "synch.h"
 #include "system.h" 
 
-
-
 #define STACK_FENCEPOST 0xdeadbeef	// this is put at the top of the
 					// execution stack, for detecting 
 					// stack overflows
@@ -58,7 +56,6 @@ Thread::Thread(char* threadName, int priorityLevel = minPriority)
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
 
-
     uid = 0;
     tid = TidAllocate();
 
@@ -66,7 +63,13 @@ Thread::Thread(char* threadName, int priorityLevel = minPriority)
 
     (void) interrupt->SetLevel(oldLevel);
 
+
     time_used = 0;
+
+
+
+    // 将此进程添加到所有进程表里...
+    scheduler->AllThreads->SortedInsert((void *)this, tid);
 
 
 #ifdef USER_PROGRAM
@@ -98,6 +101,9 @@ Thread::~Thread()
     // 释放TID 
     TidPool[tid] = 0;
     currentThreadNum--;
+
+    // 在列表中删除自己
+    scheduler->AllThreads->Remove(this);
 
     if (stack != NULL)
 	DeallocBoundedArray((char *) stack, StackSize * sizeof(int));
@@ -135,6 +141,12 @@ Thread::Fork(VoidFunctionPtr func, void *arg)
     scheduler->ReadyToRun(this);	// ReadyToRun assumes that interrupts 
 					// are disabled!
     (void) interrupt->SetLevel(oldLevel);
+
+#if PRIORITY
+    // 如果新线程比原线程优先级要高...
+    currentThread->Yield();
+
+#endif
 }    
 
 //----------------------------------------------------------------------
@@ -236,6 +248,7 @@ Thread::Yield ()
     scheduler->ReadyToRun(this);
     nextThread = scheduler->FindNextToRun();
     scheduler->Run(nextThread);
+
 #elif RR
     // 如果时间片超了 就把线程放到末尾
     // 如果还有剩余的时间片 或者是唯一一个就绪进程 就立即返回...
@@ -246,7 +259,7 @@ Thread::Yield ()
         scheduler->ReadyToRun(this);
         scheduler->Run(nextThread);
     }
-    
+
 #else
     nextThread = scheduler->FindNextToRun();
     if (nextThread != NULL) {
@@ -254,6 +267,9 @@ Thread::Yield ()
 	scheduler->Run(nextThread);
     }
 #endif
+
+    // 这个开启中断会浪费一点点时间
+    // 导致进程运行时间比时钟中断周期长
     (void) interrupt->SetLevel(oldLevel);
 }
 

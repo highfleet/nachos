@@ -31,6 +31,8 @@
 Scheduler::Scheduler()
 { 
     readyList = new List; 
+     // 初始化所有进程列表
+    AllThreads = new List;
 } 
 
 //----------------------------------------------------------------------
@@ -40,8 +42,9 @@ Scheduler::Scheduler()
 
 Scheduler::~Scheduler()
 { 
-    delete readyList; 
-} 
+    delete readyList;
+    delete AllThreads;
+}
 
 //----------------------------------------------------------------------
 // Scheduler::ReadyToRun
@@ -154,9 +157,13 @@ Scheduler::Run (Thread *nextThread)
     // point, we were still running on the old thread's stack!
     // 唔唔 在切换之前 你始终Running on oldstack...
     // 这说明nachos不会在进程切换时陷入内核
-    if (threadToBeDestroyed != NULL) {
+    
+    if (threadToBeDestroyed != NULL){
+        // printf("deleting ");
+        // ThreadPrint((int)threadToBeDestroyed);
+        // puts("");
         delete threadToBeDestroyed;
-	threadToBeDestroyed = NULL;
+        threadToBeDestroyed = NULL;
     }
 
 #ifdef USER_PROGRAM
@@ -191,6 +198,6 @@ Scheduler::Print()
 void
 Scheduler::PrintAllThreads()
 {
-    currentThread->PrintInfo();
-    readyList->Mapcar((VoidFunctionPtr)ThreadPrintInfo);
+    //currentThread->PrintInfo();
+    AllThreads->Mapcar((VoidFunctionPtr)ThreadPrintInfo);
 }

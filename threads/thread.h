@@ -39,6 +39,7 @@
 
 #include "copyright.h"
 #include "utility.h"
+#include "list.h"
 
 #ifdef USER_PROGRAM
 #include "machine.h"
@@ -61,6 +62,8 @@
 
 // 进程的四个状态
 // Thread state
+
+
 enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED };
 
 

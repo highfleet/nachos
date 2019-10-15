@@ -30,22 +30,31 @@ SimpleThread(int which)
 {
     int num;
     
-    for (num = 0; num < 5; num++) {
+    for (num = 0; num < 4; num++) {
 	printf("*** thread %d looped %d times\n", which, num);
-        currentThread->Yield();
+        //currentThread->Yield();
     }
 }
 
 void 
 SimpleTickThread(int which)
 {
+
     for (int i = 0; i < 40;i++){
         // 相当于一条命令-一下时钟...
         interrupt->OneTick();
         printf("*** thread %d looped %d times\n", which, i);
     }
+
 }
 
+void 
+SimpleNonstopThread(int which)
+{
+    for (;;){
+        currentThread->Yield();
+    }
+}
 
 
 //----------------------------------------------------------------------
@@ -86,6 +95,7 @@ ThreadTest2()
 
     // Invoke ASSERT
     Thread *t = new Thread("Test Thread " );
+    t->Fork(SimpleNonstopThread, NULL);
 
     // Shoule never reach here
 }

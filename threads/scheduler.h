@@ -21,6 +21,8 @@
 
 class Scheduler {
   public:
+    List *AllThreads;
+
     Scheduler();			// Initialize list of ready threads 
     ~Scheduler();			// De-allocate ready list
 
@@ -35,7 +37,6 @@ class Scheduler {
   private:
     List *readyList;  		// queue of threads that are ready to run,
 				// but not running
-
     
 };
 

@@ -64,10 +64,13 @@ Timer::Timer(VoidFunctionPtr timerHandler, int callArg, bool doRandom)
 //----------------------------------------------------------------------
 void 
 Timer::TimerExpired() 
+
 {   
     // 时钟中断-时间片使用量增加
     currentThread->time_used += stats->systemTicks - currentThread->last_tick;
     printf("thread  %s  time inc by %d\n",currentThread->getName(), stats->systemTicks - currentThread->last_tick);
+
+
 
     // schedule the next timer device interrupt
     interrupt->Schedule(TimerHandler, (int) this, TimeOfNextInterrupt(), 

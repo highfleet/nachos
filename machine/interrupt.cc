@@ -154,6 +154,8 @@ Interrupt::Enable()
 void
 Interrupt::OneTick()
 {
+
+    //printf("Ticked\n");
     MachineStatus old = status;
     //printf("current systick %d\n", stats->totalTicks);
     // advance simulated time
@@ -292,6 +294,9 @@ Interrupt::Schedule(VoidFunctionPtr handler, int arg, int fromNow, IntType type)
 //		pending interrupt would occur (if any).  If the pending
 //		interrupt is just the time-slice daemon, however, then 
 //		we're done!
+// CheckIfDue的调用者们:
+// OneTick()
+// Idle()（闲置进程）
 //----------------------------------------------------------------------
 bool
 Interrupt::CheckIfDue(bool advanceClock)
@@ -311,6 +316,7 @@ Interrupt::CheckIfDue(bool advanceClock)
 
     if (advanceClock && when > stats->totalTicks) {	// advance the clock
 	stats->idleTicks += (when - stats->totalTicks);
+    // 时间跳跃！！！！
 	stats->totalTicks = when;
     } else if (when > stats->totalTicks) {	// not time yet, put it back
 	pending->SortedInsert(toOccur, when);

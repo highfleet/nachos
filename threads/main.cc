@@ -81,6 +81,7 @@ extern void SayHello();
 //		of the command) -- ex: "nachos -d +" -> argc = 3 
 //	"argv" is an array of strings, one for each command line argument
 //		ex: "nachos -d +" -> argv = {"nachos", "-d", "+"}
+// 	Main占用了多少时间？
 //----------------------------------------------------------------------
 
 int
