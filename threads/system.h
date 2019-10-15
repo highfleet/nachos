@@ -8,6 +8,10 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+// Lab2 调度的Def
+#define PRIORITY 0
+#define RR 1
+
 #include "copyright.h"
 #include "utility.h"
 #include "thread.h"
@@ -19,12 +23,11 @@
 // 添加最大进程数量限制...!
 #define MaxThreadNum 128
 
-
-
 // 注意头文件里不要定义变量 会产生多重定义问题
 // 使用extern声明即可 并在其中任一引用此头文件的源文件中定义该变量
 // 即可得到跨文件全局变量
 extern int currentThreadNum;
+extern int currentTimerTicks;
 // 进程描述符池
 extern bool TidPool[MaxThreadNum];
 

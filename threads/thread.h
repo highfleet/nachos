@@ -95,6 +95,7 @@ class Thread {
     int tid;
 
     int priority;
+    
 
   public:
     Thread(char* debugName, int priorityLevel = minPriority);		// initialize a Thread 
@@ -128,6 +129,12 @@ class Thread {
 
     // 1分钟之内 我要这个进程的所有信息.jpg
     void PrintInfo();
+
+    //void timeCount(int val);
+    int time_used;
+
+    // 记录上次运行时候系统的时刻SystemTick
+    int last_tick;
 
   private:
     // some of the private data for this class is listed above

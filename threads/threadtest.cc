@@ -37,18 +37,15 @@ SimpleThread(int which)
 }
 
 void 
-SimpleNonstopThread(int args)
+SimpleTickThread(int which)
 {
-<<<<<<< Updated upstream
-    while(true){
-        
-=======
-    for (int i = 0; i < 45;i++){
+
+    for (int i = 0; i < 40;i++){
         // 相当于一条命令-一下时钟...
         interrupt->OneTick();
         printf("*** thread %d looped %d times\n", which, i);
->>>>>>> Stashed changes
     }
+
 }
 
 void 
@@ -90,7 +87,7 @@ ThreadTest2()
 
     for (int i = 1; i < MaxThreadNum;i++){
         Thread *t = new Thread("Test Thread " );
-        t->Fork(SimpleNonstopThread, NULL);
+        t->Fork(SimpleThread, NULL);
     }
 
     // Call TS Function
@@ -121,6 +118,17 @@ ThreadTest3()
 
 }
 
+void 
+ThreadTest4()
+{
+    Thread *t1 = new Thread("Test Thread 1" );
+    t1->Fork(SimpleTickThread, (void*)1);
+    Thread *t2 = new Thread("Test Thread 2" );
+    t2->Fork(SimpleTickThread, (void*)2);
+    Thread *t3 = new Thread("Test Thread 3" );
+    t3->Fork(SimpleTickThread, (void*)3);
+}
+
 //----------------------------------------------------------------------
 // ThreadTest
 // 	Invoke a test routine.
@@ -138,6 +146,9 @@ ThreadTest()
         break;
     case 3:
         ThreadTest3();
+        break;
+    case 4:
+        ThreadTest4();
         break;
     default:
         printf("No test specified.\n");
