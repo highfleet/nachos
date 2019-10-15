@@ -63,14 +63,13 @@ Thread::Thread(char* threadName, int priorityLevel = minPriority)
 
     (void) interrupt->SetLevel(oldLevel);
 
-
+<<<<<<< Updated upstream
+=======
     time_used = 0;
-
-
 
     // 将此进程添加到所有进程表里...
     scheduler->AllThreads->SortedInsert((void *)this, tid);
-
+>>>>>>> Stashed changes
 
 #ifdef USER_PROGRAM
     space = NULL;
@@ -244,22 +243,22 @@ Thread::Yield ()
     
     DEBUG('t', "Yielding thread \"%s\"\n", getName());
 
-#if PRIORITY
+#ifdef PRIORITY
     scheduler->ReadyToRun(this);
     nextThread = scheduler->FindNextToRun();
     scheduler->Run(nextThread);
-
+<<<<<<< Updated upstream
+=======
 #elif RR
     // 如果时间片超了 就把线程放到末尾
     // 如果还有剩余的时间片 或者是唯一一个就绪进程 就立即返回...
-    currentThread->last_tick = stats->systemTicks;
-
     nextThread = scheduler->FindNextToRun();
     if(nextThread!=NULL){
         scheduler->ReadyToRun(this);
         scheduler->Run(nextThread);
     }
-
+    
+>>>>>>> Stashed changes
 #else
     nextThread = scheduler->FindNextToRun();
     if (nextThread != NULL) {
@@ -471,4 +470,3 @@ Thread::setPriority(int val)
     priority = val;
     return 0;
 }
-

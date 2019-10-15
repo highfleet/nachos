@@ -12,9 +12,6 @@
 #include "system.h"
 
 int currentThreadNum;
-// 距离上次时钟打断 已经过了多久？
-// 一般是TimerTicks所声明的量 但是如果-rs启用了随机化时钟...
-int currentTimerTicks;
 bool TidPool[MaxThreadNum];
 
 // This defines *all* of the global data structures used by Nachos.
@@ -69,17 +66,9 @@ extern void Cleanup();
 //----------------------------------------------------------------------
 static void
 TimerInterruptHandler(int dummy)
-{ 
-#if RR
-    currentThread->last_tick = stats->systemTicks;
-    if (currentThread->time_used >= TimeSlice && interrupt->getStatus() != IdleMode)
-        interrupt->YieldOnReturn();
-    
-#else
+{
     if (interrupt->getStatus() != IdleMode)
-        interrupt->YieldOnReturn();
-
-#endif
+	interrupt->YieldOnReturn();
 }
 
 //----------------------------------------------------------------------
@@ -152,13 +141,7 @@ Initialize(int argc, char **argv)
     interrupt = new Interrupt;			// start up interrupt handling
     scheduler = new Scheduler();		// initialize the ready queue
     if (randomYield)				// start the timer (if needed)
-	    timer = new Timer(TimerInterruptHandler, 0, randomYield);
-    else{
-#if RR
-        timer = new Timer(TimerInterruptHandler, 0, randomYield);
-#endif
-    }
-
+	timer = new Timer(TimerInterruptHandler, 0, randomYield);
 
     threadToBeDestroyed = NULL;
 

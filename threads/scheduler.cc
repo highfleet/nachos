@@ -63,14 +63,12 @@ Scheduler::ReadyToRun (Thread *thread)
 
     thread->setStatus(READY);
 
-#if PRIORITY
+#ifdef PRIORITY
     // 带优先级的插入 随时保持顺序..
     readyList->SortedInsert((void *)thread, thread->getPriority());
     
 #else
     // Append将线程插入列表末端
-    // 要被放到队列末尾了..清空线程使用的时间片吧...
-    thread->time_used = 0;
     readyList->Append((void *)thread);
     
 #endif
@@ -138,18 +136,9 @@ Scheduler::Run (Thread *nextThread)
     // a bit to figure out what happens after this, both from the point
     // of view of the thread and from the perspective of the "outside world".
 
-    // 如果某一个线程运行到了这里
-    // 这以上 是在旧线程的上下文中运行的
-    nextThread->last_tick = stats->systemTicks;
-
     SWITCH(oldThread, nextThread);
-    // 这以下 是在新线程的上下文中运行的
     
     DEBUG('t', "Now in thread \"%s\"\n", currentThread->getName());
-
-    // 维护RR
-    // currentThread->last_tick = stats->systemTicks;
-    // printf("thread %s Started time recorded %d\n",currentThread->getName(),stats->systemTicks);
 
     // If the old thread gave up the processor because it was finishing,
     // we need to delete its carcass.  Note we cannot delete the thread
