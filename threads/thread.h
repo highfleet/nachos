@@ -71,6 +71,7 @@ enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED };
 // dummy function because C++ does not allow pointers to member functions
 extern void ThreadPrint(int arg);
 extern void ThreadPrintInfo(int ptr);
+extern void Wakeup(void* t);
 
 // The following class defines a "thread control block" -- which
 // represents a single thread of execution.

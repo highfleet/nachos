@@ -12,6 +12,7 @@
 #include "copyright.h"
 #include "system.h"
 #include "elevatortest.h"
+#include "synch.h"
 
 // testnum is set in main.cc
 int testnum = 1;
@@ -32,7 +33,7 @@ SimpleThread(int which)
     
     for (num = 0; num < 4; num++) {
 	printf("*** thread %d looped %d times\n", which, num);
-    currentThread->Yield();
+    //currentThread->Yield();
     }
 }
 
@@ -96,7 +97,7 @@ ThreadTest2()
     Thread *t = new Thread("Test Thread " );
     t->Fork(SimpleNonstopThread, NULL);
 
-    // Shoule never reach here
+    // Shouled never reach here
 }
 
 //----------------------------------------------------------------------
@@ -128,6 +129,208 @@ ThreadTest4()
     t3->Fork(SimpleTickThread, (void*)3);
 }
 
+
+//----------------------------------------------------------------------
+// Synchronize Testing
+// 	生产者和消费者
+//----------------------------------------------------------------------
+#define BUFFER_CAPACITY 3
+#define COND
+#ifdef SEM
+// 信号量实现的生产者-消费者
+class Buffer{
+
+
+    Semaphore *mutex, *full, *empty;
+public:
+    Buffer(){
+        mutex = new Semaphore("mutex", 1);
+        full = new Semaphore("full", BUFFER_CAPACITY);
+        empty = new Semaphore("empty", 0);
+    }
+
+    void Consume(){
+        empty->P();
+        mutex->P();
+        // Take
+        printf("Take from buffer...\n");
+        mutex->V();
+        full->V();
+    }
+
+    void Produce(){
+        full->P();
+        mutex->P();
+        // Write
+        printf("Write to buffer...\n");
+        mutex->V();
+        empty->V();
+    }
+};
+#else
+
+// 条件变量实现的生产者-消费者
+class Buffer{
+
+    Lock *mutex;
+    Condition *empty, *full;
+    int ele_num;
+public:
+    Buffer(){
+        mutex = new Lock("mutex");
+        empty = new Condition("empty");
+        full = new Condition("full");
+        ele_num = 0;
+    }
+
+    void Consume(){
+        // 为了成功读取元素个数 必须先获取锁
+        mutex->Acquire();
+        while(!ele_num)
+            empty->Wait(mutex);
+        printf("Take from buffer...\n");
+        ele_num--;
+        full->Signal(mutex);
+        mutex->Release();
+    }
+
+    void Produce(){
+        mutex->Acquire();
+        while(ele_num==BUFFER_CAPACITY)
+            full->Wait(mutex);
+        printf("Write buffer...\n");
+        ele_num++;
+        empty->Signal(mutex);
+        mutex->Release();
+    }
+};
+#endif
+
+void Producer(int b){
+    Buffer* buffer = (Buffer *)b;
+    for (int i = 0; i < 15;i++){
+        buffer->Produce();
+    }
+}
+
+void Consumer(int b){
+    Buffer* buffer = (Buffer *)b;
+    for (int i = 0; i < 15;i++){
+        buffer->Consume();
+    }
+}
+
+void
+ProducerConsumer()
+{
+    Buffer* buffer = new Buffer;
+    Thread *p = new Thread("producer");
+    Thread *c = new Thread("consumer");
+    p->Fork(Producer, (void *)buffer);
+    c->Fork(Consumer, (void *)buffer);
+}
+
+//----------------------------------------------------------------------
+// Barrier
+// 	屏障
+//----------------------------------------------------------------------
+#define THREAD_COUNT 5
+void Func_Barrier(Lock* mutex, Condition* cond ,int* count ){
+    mutex->Acquire();
+    (*count)++;
+    //printf("now count %d\n",*count);
+    if (*count == THREAD_COUNT){
+        *count = 0;
+        cond->Broadcast(mutex);
+    }
+    else
+        cond->Wait(mutex);
+    
+    mutex->Release();
+}
+
+struct Barrier{
+    Lock *mutex;
+    Condition *cond;
+    int count;
+    Barrier(){
+        mutex = new Lock("mutex");
+        cond = new Condition("cond");
+        count = 0;
+    }
+};
+
+void BarrierThread(int b){
+    Barrier *bar = (Barrier *)b;
+    //printf("Thread reached A\n");
+    Func_Barrier(bar->mutex, bar->cond, &(bar->count));
+    //printf("Thread reached B\n");
+}
+
+void BarrierTest(){
+    Barrier *b = new Barrier;
+    for (int i = 0; i < 5; i++){
+        Thread* t= new Thread("Test");
+        t->Fork((VoidFunctionPtr)BarrierThread, (void *)b);
+    }
+}
+
+//----------------------------------------------------------------------
+// 读者-写者
+// 	
+//----------------------------------------------------------------------
+
+class ReaderWriter{
+    int readerCnt;
+    Lock *reader, *mutex;
+public:
+    ReaderWriter(){
+        readerCnt = 0;
+        reader = new Lock("reader");
+        mutex = new Lock("mutex");
+    }
+    void Read(){
+        reader->Acquire();
+        if(!readerCnt)
+            mutex->Acquire();
+        readerCnt++;
+        reader->Release();
+        printf("Read buffer...\n");
+        currentThread->Yield();
+        printf("Read finished...\n");
+        reader->Acquire();
+        readerCnt--;
+        if(!readerCnt)
+            mutex->Release();
+        reader->Release();
+    }
+    void Write(){
+        mutex->Acquire();
+        printf("Write to buffer...\n");
+        mutex->Release();
+    }
+};
+
+void Reader(int b){
+    ReaderWriter *buffer = (ReaderWriter *)b;
+    buffer->Read();
+}
+
+void Writer(int b){
+    ReaderWriter *buffer = (ReaderWriter *)b;
+    buffer->Write();
+}
+
+void ReaderWriterTest(){
+    ReaderWriter *buffer = new ReaderWriter;
+    Thread *r1 = new Thread("reader1");
+    Thread *r2 = new Thread("reader2");
+    Thread *w1 = new Thread("writer1");
+    r1->Fork((VoidFunctionPtr)Reader, (void *)buffer);
+    r2->Fork((VoidFunctionPtr)Reader, (void *)buffer);
+    w1->Fork((VoidFunctionPtr)Writer, (void *)buffer);
+}
+
 //----------------------------------------------------------------------
 // ThreadTest
 // 	Invoke a test routine.
@@ -148,6 +351,15 @@ ThreadTest()
         break;
     case 4:
         ThreadTest4();
+        break;
+    case 5:
+        ProducerConsumer();
+        break;
+    case 6:
+        BarrierTest();
+        break;
+    case 7:
+        ReaderWriterTest();
         break;
     default:
         printf("No test specified.\n");

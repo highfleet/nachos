@@ -199,7 +199,8 @@ threadtest.o: ../threads/threadtest.cc /usr/include/stdc-predef.h \
  ../threads/utility.h ../machine/translate.h ../machine/disk.h \
  ../userprog/addrspace.h ../filesys/filesys.h ../filesys/openfile.h \
  ../threads/scheduler.h ../machine/interrupt.h ../threads/list.h \
- ../machine/stats.h ../machine/timer.h ../machine/elevatortest.h
+ ../machine/stats.h ../machine/timer.h ../machine/elevatortest.h \
+ ../threads/synch.h
 interrupt.o: ../machine/interrupt.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../machine/interrupt.h ../threads/list.h \
  ../threads/copyright.h ../threads/utility.h ../threads/bool.h \

@@ -50,24 +50,18 @@ Thread::Thread(char* threadName, int priorityLevel = minPriority)
 
     //超过线程上限,报错..
     DEBUG('t', "Creating a new thread");
-
     ASSERT(currentThreadNum < MaxThreadNum);
 
-
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
-
     uid = 0;
     tid = TidAllocate();
 
     priority = priorityLevel;
-
     (void) interrupt->SetLevel(oldLevel);
-
     time_used = 0;
 
     // 将此进程添加到所有进程表里...
     scheduler->AllThreads->SortedInsert((void *)this, tid);
-
 
 #ifdef USER_PROGRAM
     space = NULL;
@@ -141,7 +135,7 @@ Thread::Fork(VoidFunctionPtr func, void *arg)
 
 #if PRIORITY
     // 如果新线程比原线程优先级要高...
-    //currentThread->Yield();
+    currentThread->Yield();
 
 #endif
 }    
@@ -320,6 +314,7 @@ static void ThreadFinish()    { currentThread->Finish(); }
 static void InterruptEnable() { interrupt->Enable(); }
 void ThreadPrint(int arg){ Thread *t = (Thread *)arg; t->Print(); }
 void ThreadPrintInfo(int ptr) { Thread *t = (Thread *)ptr; t->PrintInfo(); }
+void Wakeup(void*t) { scheduler->ReadyToRun((Thread*)t); }
 
 //----------------------------------------------------------------------
 // Thread::StackAllocate
@@ -445,7 +440,8 @@ Thread::PrintInfo()
     sprintf(str, "%s", name);
     sprintf(str + 20, status_name[status]);
     sprintf(str + 35, "[TID]%d", tid);
-    sprintf(str + 50, "[UID]%d", uid);
+    sprintf(str + 45, "[UID]%d", uid);
+
     for (int i = 0; i < 50;i++)
         if(str[i]==0)
             str[i] = ' ';

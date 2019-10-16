@@ -13,7 +13,7 @@
 // Copyright (c) 1992-1993 The Regents of the University of California.
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // synch.h -- synchronization primitives.  
-
+ 
 #ifndef SYNCH_H
 #define SYNCH_H
 
@@ -79,7 +79,9 @@ class Lock {
 
   private:
     char* name;				// for debugging
-    // plus some other stuff you'll need to define
+    Semaphore *lock;
+    Thread *holder;
+
 };
 
 // The following class defines a "condition variable".  A condition
@@ -131,6 +133,7 @@ class Condition {
 
   private:
     char* name;
-    // plus some other stuff you'll need to define
+    List *queue;
 };
 #endif // SYNCH_H
+
