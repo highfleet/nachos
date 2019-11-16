@@ -21,6 +21,7 @@
 #include "copyright.h"
 #include "scheduler.h"
 #include "system.h"
+#include "translate.h"
 
 //----------------------------------------------------------------------
 // Scheduler::Scheduler
@@ -44,6 +45,7 @@ Scheduler::~Scheduler()
 { 
     delete readyList;
     delete AllThreads;
+    
 }
 
 //----------------------------------------------------------------------
@@ -60,13 +62,16 @@ void
 Scheduler::ReadyToRun (Thread *thread)
 {
     DEBUG('t', "Putting thread %s on ready list.\n", thread->getName());
-
     thread->setStatus(READY);
+
+#ifdef USER_PROGRAM
+    if(thread->getStatus() == SUSPENDED)
+        scheduler->Activate(thread);
+#endif
 
 #if PRIORITY
     // 带优先级的插入 随时保持顺序..
     readyList->SortedInsert((void *)thread, thread->getPriority());
-    
 #else
     // Append将线程插入列表末端
     // 要被放到队列末尾了..清空线程使用的时间片吧...
@@ -90,6 +95,23 @@ Scheduler::FindNextToRun ()
 {
     // 返回链表最前的元素
     return (Thread *)readyList->Remove();
+}
+
+void 
+Scheduler::Suspend(Thread* thread){
+#ifdef USER_PROGRAM
+    thread->setStatus(SUSPENDED);
+    if (thread->getStatus() == READY)
+        readyList->Remove(thread);
+    thread->Suspend();
+
+#endif
+}
+
+void
+Scheduler::Activate(Thread* thread){
+    
+    return;
 }
 
 //----------------------------------------------------------------------
@@ -164,14 +186,14 @@ Scheduler::Run (Thread *nextThread)
         // puts("");
         delete threadToBeDestroyed;
         threadToBeDestroyed = NULL;
-    }
+    } 
 
 #ifdef USER_PROGRAM
     if (currentThread->space != NULL) {		// if there is an address space
         //  这是在回复用户寄存器...
         currentThread->RestoreUserState();     // to restore, do it.
-    //  这是在恢复页表和页表大小
-	currentThread->space->RestoreState();
+        //  这是在恢复页表和页表大小
+        currentThread->space->RestoreState();
     }
 #endif
 }

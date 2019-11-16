@@ -66,6 +66,8 @@ Semaphore::P()
 {
     IntStatus oldLevel = interrupt->SetLevel(IntOff);	// disable interrupts
     
+    // while不可以换成if:
+    // 可能被其他线程抢占
     while (value == 0) { 			// semaphore not available
 	queue->Append((void *)currentThread);	// so go to sleep
 	// 让线程进入BLOCKED（仅有V才能将它唤醒）

@@ -69,16 +69,18 @@ AddrSpace::AddrSpace(OpenFile *executable)
     if ((noffH.noffMagic != NOFFMAGIC) && 
 		(WordToHost(noffH.noffMagic) == NOFFMAGIC))
     	SwapHeader(&noffH);
-    ASSERT(noffH.noffMagic == NOFFMAGIC);
+    // ASSERT(noffH.noffMagic == NOFFMAGIC);
 
 // how big is address space?
     size = noffH.code.size + noffH.initData.size + noffH.uninitData.size 
 			+ UserStackSize;	// we need to increase the size
 						// to leave room for the stack
     numPages = divRoundUp(size, PageSize);
+// 物理页大小=虚拟页大小=磁盘扇区大小：128bytes    
     size = numPages * PageSize;
-
-    ASSERT(numPages <= NumPhysPages);		// check we're not trying
+// 一个进程的虚拟地址空间 不能大于主存(32页*)
+    //ASSERT(numPages <= NumPhysPages);		// check we're not trying
+    // 现在可以加载大于物理内存的程序?...(Lab4::Excercise6)
 						// to run anything too big --
 						// at least until we have
 						// virtual memory
@@ -86,36 +88,78 @@ AddrSpace::AddrSpace(OpenFile *executable)
     DEBUG('a', "Initializing address space, num pages %d, size %d\n", 
 					numPages, size);
 // first, set up the translation 
+// PageTable 是全局变量
+// 页表的第i项属于VPN[i]
     pageTable = new TranslationEntry[numPages];
+// 初始化一个位图
+
     for (i = 0; i < numPages; i++) {
-	pageTable[i].virtualPage = i;	// for now, virtual page # = phys page #
-	pageTable[i].physicalPage = i;
-	pageTable[i].valid = TRUE;
-	pageTable[i].use = FALSE;
-	pageTable[i].dirty = FALSE;
-	pageTable[i].readOnly = FALSE;  // if the code segment was entirely on 
-					// a separate page, we could set its 
-					// pages to be read-only
+        DEBUG('a', "Initializing PTE %d...\n", i);
+        pageTable[i].virtualPage = i;
+        pageTable[i].physicalPage = GetPage(pageTable+i, true);
+        pageTable[i].swapPage = -1;
+        pageTable[i].fileAddr = -1;
+        pageTable[i].valid = pageTable[i].physicalPage<0?FALSE:TRUE;
+        pageTable[i].use = FALSE;
+        pageTable[i].dirty = FALSE;
+        pageTable[i].readOnly = FALSE;           // if the code segment was entirely on
+                                                 // a separate page, we could set its pages to be read-only 哦哦...这样啊
+        //ASSERT(pageTable[i].physicalPage != -1); // 确保不是没有空间了...
+        if(pageTable[i].valid)
+            bzero(machine->mainMemory + pageTable[i].physicalPage * PageSize, PageSize);    // 现在就刷零[poi]
     }
-    
-// zero out the entire address space, to zero the unitialized data segment 
-// and the stack segment
-    bzero(machine->mainMemory, size);
 
-// then, copy in the code and data segments into memory
-    if (noffH.code.size > 0) {
+    // zero out the entire address space, to zero the unitialized data segment
+    // and the stack segment
+    //bzero(machine->mainMemory, size);
+    // then, copy in the code and data segments into memory
+
+//     if (noffH.code.size > 0) {
+//         // 从代码段.text读取代码到内存指定位置
+//         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
+// 			noffH.code.virtualAddr, noffH.code.size);
+//         executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
+// 			noffH.code.size, noffH.code.inFileAddr);
+//     }
+//     if (noffH.initData.size > 0) {
+//         DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
+// 			noffH.initData.virtualAddr, noffH.initData.size);
+//         executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
+// 			noffH.initData.size, noffH.initData.inFileAddr);
+//     }
+
+    // 以页为单位 将可执行文件依次加载到内存...
+    if(noffH.code.size>0){
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
-			noffH.code.virtualAddr, noffH.code.size);
-        executable->ReadAt(&(machine->mainMemory[noffH.code.virtualAddr]),
-			noffH.code.size, noffH.code.inFileAddr);
-    }
-    if (noffH.initData.size > 0) {
-        DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
-			noffH.initData.virtualAddr, noffH.initData.size);
-        executable->ReadAt(&(machine->mainMemory[noffH.initData.virtualAddr]),
-			noffH.initData.size, noffH.initData.inFileAddr);
+ 			noffH.code.virtualAddr, noffH.code.size);
+        int sizeRemain = noffH.code.size;
+        int virtPage = noffH.code.virtualAddr/PageSize;   //物理内存的页号
+        int filePtr = noffH.code.inFileAddr;
+        while(sizeRemain){
+            int writeSize = min(PageSize, sizeRemain);
+            pageTable[virtPage].fileAddr = filePtr;    // 记录在文件中的位置 以备日后取用
+            int physPage = pageTable[virtPage].physicalPage;
+            if(pageTable[virtPage].valid)
+                executable->ReadAt(machine->mainMemory + physPage * PageSize, writeSize, filePtr);
+            sizeRemain -= writeSize, filePtr += writeSize, virtPage++;
+        }
     }
 
+    if(noffH.initData.size>0){
+        DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
+ 			noffH.initData.virtualAddr, noffH.initData.size);
+        int sizeRemain = noffH.initData.size;
+        int virtPage = noffH.initData.virtualAddr/PageSize;   //物理内存的页号
+        int filePtr = noffH.initData.inFileAddr;
+        while(sizeRemain){
+            int writeSize = min(PageSize, sizeRemain);    
+            pageTable[virtPage].fileAddr = filePtr;    // 记录在文件中的位置 以备日后取用
+            int physPage = pageTable[virtPage].physicalPage;
+            if(pageTable[virtPage].valid)
+                executable->ReadAt(machine->mainMemory + physPage * PageSize, writeSize, filePtr);
+            sizeRemain -= writeSize, filePtr+=writeSize, virtPage++;
+        }
+    }
 }
 
 //----------------------------------------------------------------------
@@ -166,10 +210,17 @@ AddrSpace::InitRegisters()
 //	to this address space, that needs saving.
 //
 //	For now, nothing!
+//      上下文切换时做什么?
+//      TLB有效位清零(Lab4::Excercise 5)
 //----------------------------------------------------------------------
 
 void AddrSpace::SaveState() 
-{}
+{   
+    if (machine->tlb!=NULL)
+        for (int i = 0; i < TLBSize;i++)
+            machine->tlb[i].valid = false;
+        
+}
 
 //----------------------------------------------------------------------
 // AddrSpace::RestoreState

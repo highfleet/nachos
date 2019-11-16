@@ -37,6 +37,9 @@
 // Routines for converting Words and Short Words to and from the
 // simulated machine's format of little endian.  These end up
 // being NOPs when the host machine is also little endian (DEC and Intel).
+int memTime;
+int fifoPtr;
+int scar;
 
 unsigned int
 WordToHost(unsigned int word) {
@@ -70,6 +73,46 @@ WordToMachine(unsigned int word) { return WordToHost(word); }
 unsigned short
 ShortToMachine(unsigned short shortword) { return ShortToHost(shortword); }
 
+void SwapoutPage(int page){
+    DEBUG('a', "Save page %d to swap space~~\n", page);
+    stats->numPageSwapOut++;
+    int store = machine->swapMap->Find();
+    machine->page2Entry[page]->dirty = TRUE;
+    machine->page2Entry[page]->swapPage = store;
+    ASSERT(store >= 0);
+    machine->swapSpace->WriteAt(machine->mainMemory + page * PageSize, PageSize, store * PageSize);
+}
+
+//----------------------------------------------------------------------
+// 获取页面 
+// 优先获取空闲页面
+// 如果没有 就选择一牺牲页面
+// 并整合了将牺牲页面载入磁盘的操作...
+//----------------------------------------------------------------------
+int GetPage(TranslationEntry* PTE, bool lazy = false){
+    int page = machine->memoryMap->Find();
+    int store = -1;
+    if (page == -1){
+        // 选择一个牺牲页面
+        if(lazy) return -1;
+        page = (scar++) % NumPhysPages;
+        DEBUG('a', "Allocate a physpage # %d\n", page);
+        // 牺牲页失效
+        machine->page2Entry[page]->valid = false;
+        if(machine->page2Entry[page]->dirty || machine->page2Entry[page]->fileAddr < 0){
+            // 修改过...! 换入交换空间...
+            SwapoutPage(page);
+            // 将牺牲页相关的TLB也标记失效
+            if(machine->tlb !=NULL)
+                for (int i = 0; i < TLBSize;i++)
+                    if(machine->tlb[i].physicalPage == page)
+                        machine->tlb[i].valid = false;
+        }
+    }
+    // 这个page一定是分给currentThread的
+    machine->page2Entry[page] = PTE;
+    return page;
+}
 
 //----------------------------------------------------------------------
 // Machine::ReadMem
@@ -81,9 +124,11 @@ ShortToMachine(unsigned short shortword) { return ShortToHost(shortword); }
 //
 //	"addr" -- the virtual address to read from
 //	"size" -- the number of bytes to read (1, 2, or 4)
+//      size 必须小于4 避免跨物理页读取 
+//      她多机灵啊...
 //	"value" -- the place to write the result
 //----------------------------------------------------------------------
-
+// 访存指令 将虚拟地址addr翻译为物理地址
 bool
 Machine::ReadMem(int addr, int size, int *value)
 {
@@ -105,6 +150,7 @@ Machine::ReadMem(int addr, int size, int *value)
 	break;
 	
       case 2:
+        // 基于地址的强制类型转换 取引用 获取特定大小
 	data = *(unsigned short *) &machine->mainMemory[physicalAddress];
 	*value = ShortToHost(data);
 	break;
@@ -151,17 +197,14 @@ Machine::WriteMem(int addr, int size, int value)
       case 1:
 	machine->mainMemory[physicalAddress] = (unsigned char) (value & 0xff);
 	break;
-
       case 2:
 	*(unsigned short *) &machine->mainMemory[physicalAddress]
 		= ShortToMachine((unsigned short) (value & 0xffff));
 	break;
-      
       case 4:
 	*(unsigned int *) &machine->mainMemory[physicalAddress]
 		= WordToMachine((unsigned int) value);
 	break;
-	
       default: ASSERT(FALSE);
     }
     
@@ -194,18 +237,19 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
     DEBUG('a', "\tTranslate 0x%x, %s: ", virtAddr, writing ? "write" : "read");
 
 // check for alignment errors
+// 逐字读取必须4字节对齐 读取short必须偶字节对齐...!
     if (((size == 4) && (virtAddr & 0x3)) || ((size == 2) && (virtAddr & 0x1))){
 	DEBUG('a', "alignment problem at %d, size %d!\n", virtAddr, size);
 	return AddressErrorException;
     }
     
     // we must have either a TLB or a page table, but not both!
-    ASSERT(tlb == NULL || pageTable == NULL);	
+    //ASSERT(tlb == NULL || pageTable == NULL);	 // Modified for lab4 
     ASSERT(tlb != NULL || pageTable != NULL);	
 
 // calculate the virtual page number, and offset within the page,
 // from the virtual address
-    vpn = (unsigned) virtAddr / PageSize;
+    vpn = (unsigned) virtAddr / PageSize; // 128byte / 2^15bit
     offset = (unsigned) virtAddr % PageSize;
     
     if (tlb == NULL) {		// => page table => vpn is index into table
@@ -220,16 +264,19 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 	}
 	entry = &pageTable[vpn];
     } else {
-        for (entry = NULL, i = 0; i < TLBSize; i++)
+        for (entry = NULL, i = 0; i < TLBSize; i++)     //这里没有确保vpn不越界
     	    if (tlb[i].valid && (tlb[i].virtualPage == vpn)) {
-		entry = &tlb[i];			// FOUND!
-		break;
-	    }
+		entry = &tlb[i];			// TLB命中
+                //printf("TLB命中%d!\n", vpn);
+                stats->numTLBHits++;
+                tlb[i].last_used = ++memTime;
+                break;
+            }
 	if (entry == NULL) {				// not found
     	    DEBUG('a', "*** no valid TLB entry found for this virtual page!\n");
     	    return PageFaultException;		// really, this is a TLB fault,
 						// the page may be in memory,
-						// but not in the TLB
+						// but not in the TLB （迫真）
 	}
     }
 
@@ -246,8 +293,11 @@ Machine::Translate(int virtAddr, int* physAddr, int size, bool writing)
 	return BusErrorException;
     }
     entry->use = TRUE;		// set the use, dirty bits
-    if (writing)
-	entry->dirty = TRUE;
+    pageTable[vpn].use = TRUE;
+    if (writing){
+        entry->dirty = TRUE;
+        pageTable[vpn].dirty = TRUE;
+    }
     *physAddr = pageFrame * PageSize + offset;
     ASSERT((*physAddr >= 0) && ((*physAddr + size) <= MemorySize));
     DEBUG('a', "phys addr = 0x%x\n", *physAddr);

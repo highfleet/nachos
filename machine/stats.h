@@ -33,7 +33,10 @@ class Statistics {
     int numConsoleCharsRead;	// number of characters read from the keyboard
     int numConsoleCharsWritten; // number of characters written to the display
     int numPageFaults;		// number of virtual memory page faults
-    int numPacketsSent;		// number of packets sent over the network
+    int numTLBHits;
+    int numTLBMisses;
+    int numPageSwapOut;
+    int numPacketsSent;   // number of packets sent over the network
     int numPacketsRecvd;	// number of packets received over the network
 
     Statistics(); 		// initialize everything to zero

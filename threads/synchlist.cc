@@ -7,6 +7,7 @@
 // 	Implemented in "monitor"-style -- surround each procedure with a
 // 	lock acquire and release pair, using condition signal and wait for
 // 	synchronization.
+//  lock 保证管程互斥进入
 //
 // Copyright (c) 1992-1993 The Regents of the University of California.
 // All rights reserved.  See copyright.h for copyright notice and limitation 
@@ -56,6 +57,9 @@ SynchList::Append(void *item)
     lock->Acquire();		// enforce mutual exclusive access to the list 
     list->Append(item);
     listEmpty->Signal(lock);	// wake up a waiter, if any
+    // 如果是Hoare语义:
+    // 此处Signal交出锁， 唤醒等待进程并进入Signal队列等待， 等待其结束后立即拿回锁.
+    // 有进程结束时会优先到Signal队列中调度 因此锁*一定*会拿回来。
     lock->Release();
 }
 

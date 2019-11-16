@@ -11,7 +11,6 @@
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
-
 #include "machine.h"
 #include "mipssim.h"
 #include "system.h"
@@ -30,12 +29,13 @@ static void Mult(int a, int b, bool signedArith, int* hiPtr, int* loPtr);
 void
 Machine::Run()
 {
-    Instruction *instr = new Instruction;  // storage for decoded instruction
 
+    Instruction *instr = new Instruction;  // storage for decoded instruction
+    // 寄存器和页表等硬件状态已经被初始化
     if(DebugIsEnabled('m'))
         printf("Starting thread \"%s\" at time %d\n",
 	       currentThread->getName(), stats->totalTicks);
-    interrupt->setStatus(UserMode);
+    interrupt->setStatus(UserMode);     // 进入用户态(not implemented)
     for (;;) {
         OneInstruction(instr);
 	interrupt->OneTick();
@@ -46,7 +46,7 @@ Machine::Run()
 
 
 //----------------------------------------------------------------------
-// TypeToReg
+// TypeToReg [helper]
 // 	Retrieve the register # referred to in an instruction. 
 //----------------------------------------------------------------------
 
@@ -88,6 +88,8 @@ TypeToReg(RegType reg, Instruction *instr)
 //	leaving.  This allows the Nachos kernel to control our behavior
 //	by controlling the contents of memory, the translation table,
 //	and the register set.
+//      
+//      取指->译码->执行
 //----------------------------------------------------------------------
 
 void
@@ -97,11 +99,11 @@ Machine::OneInstruction(Instruction *instr)
     int nextLoadReg = 0; 	
     int nextLoadValue = 0; 	// record delayed load operation, to apply
 				// in the future
-
-    // Fetch instruction 
+                                
+    // Fetch instruction 4字节
     if (!machine->ReadMem(registers[PCReg], 4, &raw))
 	return;			// exception occurred
-    instr->value = raw;
+    instr->value = raw; // 4-byte 指令编码
     instr->Decode();
 
     if (DebugIsEnabled('m')) {
@@ -114,8 +116,8 @@ Machine::OneInstruction(Instruction *instr)
        printf("\n");
        }
     
-    // Compute next pc, but don't install in case there's an error or branch.
-    int pcAfter = registers[NextPCReg] + 4;
+    // 计算下一个PC 但确保本条指令没有异常后才会更新PC
+    int pcAfter = registers[NextPCReg] + 4; // 下一条PC
     int sum, diff, tmp, value;
     unsigned int rs, rt, imm;
 
@@ -126,13 +128,13 @@ Machine::OneInstruction(Instruction *instr)
 	sum = registers[instr->rs] + registers[instr->rt];
 	if (!((registers[instr->rs] ^ registers[instr->rt]) & SIGN_BIT) &&
 	    ((registers[instr->rs] ^ sum) & SIGN_BIT)) {
-	    RaiseException(OverflowException, 0);
+	    RaiseException(OverflowException, 0);               // 溢出异常 @OF标记位的检测
 	    return;
 	}
 	registers[instr->rd] = sum;
 	break;
 	
-      case OP_ADDI:
+      case OP_ADDI:     // 立即数加法
 	sum = registers[instr->rs] + instr->extra;
 	if (!((registers[instr->rs] ^ instr->extra) & SIGN_BIT) &&
 	    ((instr->extra ^ sum) & SIGN_BIT)) {
@@ -142,35 +144,35 @@ Machine::OneInstruction(Instruction *instr)
 	registers[instr->rt] = sum;
 	break;
 	
-      case OP_ADDIU:
+      case OP_ADDIU:    // 立即数无符号加法
 	registers[instr->rt] = registers[instr->rs] + instr->extra;
 	break;
 	
-      case OP_ADDU:
+      case OP_ADDU:     // 寄存器无符号加法
 	registers[instr->rd] = registers[instr->rs] + registers[instr->rt];
 	break;
 	
-      case OP_AND:
+      case OP_AND:      // 按位与
 	registers[instr->rd] = registers[instr->rs] & registers[instr->rt];
 	break;
 	
-      case OP_ANDI:
+      case OP_ANDI:     
 	registers[instr->rt] = registers[instr->rs] & (instr->extra & 0xffff);
 	break;
 	
-      case OP_BEQ:
+      case OP_BEQ:      // Equal条件跳转
 	if (registers[instr->rs] == registers[instr->rt])
 	    pcAfter = registers[NextPCReg] + IndexToAddr(instr->extra);
 	break;
 	
-      case OP_BGEZAL:
+      case OP_BGEZAL:   // 
 	registers[R31] = registers[NextPCReg] + 4;
-      case OP_BGEZ:
+      case OP_BGEZ:     // 
 	if (!(registers[instr->rs] & SIGN_BIT))
 	    pcAfter = registers[NextPCReg] + IndexToAddr(instr->extra);
 	break;
 	
-      case OP_BGTZ:
+      case OP_BGTZ:     
 	if (registers[instr->rs] > 0)
 	    pcAfter = registers[NextPCReg] + IndexToAddr(instr->extra);
 	break;
@@ -180,20 +182,20 @@ Machine::OneInstruction(Instruction *instr)
 	    pcAfter = registers[NextPCReg] + IndexToAddr(instr->extra);
 	break;
 	
-      case OP_BLTZAL:
+      case OP_BLTZAL:   
 	registers[R31] = registers[NextPCReg] + 4;
       case OP_BLTZ:
 	if (registers[instr->rs] & SIGN_BIT)
 	    pcAfter = registers[NextPCReg] + IndexToAddr(instr->extra);
 	break;
 	
-      case OP_BNE:
+      case OP_BNE:      // Not Equal 跳转
 	if (registers[instr->rs] != registers[instr->rt])
 	    pcAfter = registers[NextPCReg] + IndexToAddr(instr->extra);
 	break;
 	
       case OP_DIV:
-	if (registers[instr->rt] == 0) {
+	if (registers[instr->rt] == 0) {        // 除零          
 	    registers[LoReg] = 0;
 	    registers[HiReg] = 0;
 	} else {
@@ -531,7 +533,7 @@ Machine::OneInstruction(Instruction *instr)
 	    return;
 	break;
     	
-      case OP_SYSCALL:
+      case OP_SYSCALL:          // 系统调用
 	RaiseException(SyscallException, 0);
 	return; 
 	
@@ -561,7 +563,7 @@ Machine::OneInstruction(Instruction *instr)
     registers[PrevPCReg] = registers[PCReg];	// for debugging, in case we
 						// are jumping into lala-land
     registers[PCReg] = registers[NextPCReg];
-    registers[NextPCReg] = pcAfter;
+    registers[NextPCReg] = pcAfter;             // 
 }
 
 //----------------------------------------------------------------------
@@ -584,6 +586,7 @@ Machine::DelayedLoad(int nextReg, int nextValue)
 //----------------------------------------------------------------------
 // Instruction::Decode
 // 	Decode a MIPS instruction 
+// 31:26 OpCode @6bit
 //----------------------------------------------------------------------
 
 void
@@ -591,19 +594,22 @@ Instruction::Decode()
 {
     OpInfo *opPtr;
     
-    rs = (value >> 21) & 0x1f;
+    rs = (value >> 21) & 0x1f;  
     rt = (value >> 16) & 0x1f;
     rd = (value >> 11) & 0x1f;
-    opPtr = &opTable[(value >> 26) & 0x3f];
+    opPtr = &opTable[(value >> 26) & 0x3f];     // 每一种指令 和其格式的映射
     opCode = opPtr->opCode;
     if (opPtr->format == IFMT) {
+        // RS 5 RT 5 Immediate 16
 	extra = value & 0xffff;
-	if (extra & 0x8000) {
+	if (extra & 0x8000) { // 这是个负数
     	   extra |= 0xffff0000;
 	}
     } else if (opPtr->format == RFMT) {
+        // shift amount: 位移量
 	extra = (value >> 6) & 0x1f;
-    } else {
+    } else {    // JFMT
+        // Instr Index 25:0 @26bit
 	extra = value & 0x3ffffff;
     }
     if (opCode == SPECIAL) {
@@ -626,7 +632,7 @@ Instruction::Decode()
 }
 
 //----------------------------------------------------------------------
-// Mult
+// Mult (两个int mult超精度的情况))
 // 	Simulate R2000 multiplication.
 // 	The words at *hiPtr and *loPtr are overwritten with the
 // 	double-length result of the multiplication.

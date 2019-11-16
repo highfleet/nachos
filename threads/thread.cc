@@ -32,9 +32,7 @@
 //	"threadName" is an arbitrary string, useful for debugging.
 //  
 //  Lab1
-//  如果要分配tid的话 在构造函数中 还是在fork中比较好呢
-//  在目前的nachos机制上 我并没有没有发现以上有所区别
-//  暂且决定在这里吧
+//  分配TID
 //  Lab2
 //  增加了初始化优先级的参数 默认为最低
 //----------------------------------------------------------------------
@@ -65,6 +63,7 @@ Thread::Thread(char* threadName, int priorityLevel = minPriority)
 
 #ifdef USER_PROGRAM
     space = NULL;
+    // 在StartProgress中赋值
 #endif
 }
 
@@ -126,6 +125,7 @@ Thread::Fork(VoidFunctionPtr func, void *arg)
     DEBUG('t', "Forking thread \"%s\" with func = 0x%x, arg = %d\n",
 	  name, (int) func, (int*) arg);
     
+    // 运行的函数、传参 
     StackAllocate(func, arg);
 
     IntStatus oldLevel = interrupt->SetLevel(IntOff);
@@ -180,7 +180,7 @@ Thread::CheckOverflow()
 //
 // 	NOTE: we disable interrupts, so that we don't get a time slice 
 //	between setting threadToBeDestroyed, and going to sleep.
-//  如果发生了的话 相当于删除一个Running进程
+//  如果发生了的话 那么这个进程依然还在ReadyList中
 //----------------------------------------------------------------------
 
 //  Finish 的进程一定会被Run检测到
@@ -188,6 +188,7 @@ Thread::CheckOverflow()
 void
 Thread::Finish ()
 {
+    // 这里关闭了中断 下一个进程被调度时再打开(在Yield()中)
     (void) interrupt->SetLevel(IntOff);		
     ASSERT(this == currentThread);
     
@@ -255,13 +256,17 @@ Thread::Yield ()
     nextThread = scheduler->FindNextToRun();
     if (nextThread != NULL) {
 	scheduler->ReadyToRun(this);
+    /********** 从这里离开 **********/
 	scheduler->Run(nextThread);
+    /********** 从这里回归 **********/
     }
 #endif
 
     // 这个开启中断会浪费一点点时间
-    // 导致进程运行时间比时钟中断周期长
+    // 导致进程运行时间比时钟中断周期长 -10Ticks
     (void) interrupt->SetLevel(oldLevel);
+    // 回归的每个线程都要打开中断
+    // 新线程的打开中断在StartUpPc中
 }
 
 
@@ -298,8 +303,23 @@ Thread::Sleep ()
     status = BLOCKED;
     while ((nextThread = scheduler->FindNextToRun()) == NULL)
 	interrupt->Idle();	// no one to run, wait for an interrupt
-        
+
     scheduler->Run(nextThread); // returns when we've been signalled
+}
+
+
+void 
+Thread::Suspend(){
+#ifdef USER_PROGRAM
+    for (int i = 0; i < space->numPages;i++){
+        TranslationEntry *pte = space->pageTable + i;
+        if (pte->valid &&pte->dirty){
+            SwapoutPage(pte->physicalPage);
+            machine->memoryMap->Clear(pte->physicalPage);
+            pte->valid = FALSE;
+        }
+    }
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -331,6 +351,7 @@ void Wakeup(void*t) { scheduler->ReadyToRun((Thread*)t); }
 void
 Thread::StackAllocate (VoidFunctionPtr func, void *arg)
 {
+    // i386中 stack是栈的最小地址
     stack = (int *) AllocBoundedArray(StackSize * sizeof(int));
 
 
@@ -344,7 +365,7 @@ Thread::StackAllocate (VoidFunctionPtr func, void *arg)
     // 栈最大能达到的地址
     stack[StackSize - 1] = STACK_FENCEPOST;
 #else
-    // 这才是正宗的栈 High —> Low Address  
+    // High —> Low Address  
     // i386 & MIPS & SPARC stack works from high addresses to low addresses
 #ifdef HOST_SPARC
     // SPARC stack must contains at least 1 activation record to start with.
@@ -375,7 +396,7 @@ Thread::StackAllocate (VoidFunctionPtr func, void *arg)
 #ifdef USER_PROGRAM
 #include "machine.h"
 
-//----------------------------------------------------------------------
+//----------------------- -----------------------------------------------
 // Thread::SaveUserState
 //	Save the CPU state of a user program on a context switch.
 //

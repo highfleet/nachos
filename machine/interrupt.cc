@@ -11,8 +11,9 @@
 //	This module also keeps track of simulated time.  Time advances
 //	only when the following occur: 
 //		interrupts are re-enabled
-//		a user instruction is executed
-//		there is nothing in the ready queue（IDLE）
+//		a user instruction is executed  (User Prog Mode)
+//		there is nothing in the ready queue（IDLE）-> CheckIfDue(TRUE)
+//
 //
 //  DO NOT CHANGE -- part of the machine emulation
 //
@@ -154,7 +155,7 @@ Interrupt::Enable()
 void
 Interrupt::OneTick()
 {
-
+ 
     //printf("Ticked\n");
     MachineStatus old = status;
     //printf("current systick %d\n", stats->totalTicks);
@@ -174,6 +175,7 @@ Interrupt::OneTick()
 					// interrupts disabled)
 
     // 处理所有的DuePendingInterrupt
+    // FALSE 只仅处理在这一刻到期的时间
     while (CheckIfDue(FALSE))		// check for pending interrupts
 	;
     ChangeLevel(IntOff, IntOn);		// re-enable interrupts

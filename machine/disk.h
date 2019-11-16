@@ -31,7 +31,7 @@
 // As with other I/O devices, the raw physical disk is an asynchronous device --
 // requests to read or write portions of the disk return immediately,
 // and an interrupt is invoked later to signal that the operation completed.
-//
+// 盘片表面、磁道、扇区
 // The physical disk is in fact simulated via operations on a UNIX file.
 //
 // To make life a little more realistic, the simulated time for

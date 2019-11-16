@@ -17,7 +17,7 @@
 #include "system.h"
 #ifdef HOST_SPARC
 #include <strings.h>
-#endif
+#endif 
 
 //----------------------------------------------------------------------
 // OpenFile::OpenFile

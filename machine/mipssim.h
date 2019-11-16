@@ -105,7 +105,7 @@
 #define SPECIAL 100
 #define BCOND	101
 
-#define IFMT 1
+#define IFMT 1          
 #define JFMT 2
 #define RFMT 3
 
@@ -115,7 +115,8 @@ struct OpInfo {
 };
 
 static OpInfo opTable[] = {
-    {SPECIAL, RFMT}, {BCOND, IFMT}, {OP_J, JFMT}, {OP_JAL, JFMT},
+
+    {SPECIAL, RFMT}, {BCOND, IFMT}, {OP_J, JFMT}, {OP_JAL, JFMT},       // 若OpCode是Special 将被二次索引到Special Table
     {OP_BEQ, IFMT}, {OP_BNE, IFMT}, {OP_BLEZ, IFMT}, {OP_BGTZ, IFMT},
     {OP_ADDI, IFMT}, {OP_ADDIU, IFMT}, {OP_SLTI, IFMT}, {OP_SLTIU, IFMT},
     {OP_ANDI, IFMT}, {OP_ORI, IFMT}, {OP_XORI, IFMT}, {OP_LUI, IFMT},
@@ -132,7 +133,7 @@ static OpInfo opTable[] = {
     {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT}, {OP_UNIMP, IFMT},
     {OP_RES, IFMT}, {OP_RES, IFMT}, {OP_RES, IFMT}, {OP_RES, IFMT}
 };
-
+ 
 /*
  * The table below is used to convert the "funct" field of SPECIAL
  * instructions into the "opCode" field of a MemWord.
@@ -227,3 +228,36 @@ static struct OpString opStrings[] = {
       };
 
 #endif // MIPSSIM_H
+
+
+/*****************************
+Immediate: I-Type
+
+Filed 31:26 : opcode 6bit
+
+Filed 25:21 : rs 5bit
+
+Filed 20:16 : rt 5bit
+
+Filed 15:0 : immediate 16bit
+
+Jump: J-Type
+
+Filed 31:26 : opcode 6bit
+
+Filed 25:0 : instr_index 26bit
+
+Register: R-Type
+
+Filed 31:26 : opcode 6bit
+
+Filed 25:21 : rs 5bit
+
+Filed 20:16 : rt 5bit
+
+Filed 15:11 : rd 5bit
+
+Filed 10:6 :sa 5bit
+
+Filed 5:0 : function 6bit
+*****************************/

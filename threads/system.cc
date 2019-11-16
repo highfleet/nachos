@@ -33,15 +33,15 @@ FileSystem  *fileSystem;
 #endif
 
 #ifdef FILESYS
-SynchDisk   *synchDisk;
+SynchDisk   *synchDisk;     // 磁盘
 #endif
 
 #ifdef USER_PROGRAM	// requires either FILESYS or FILESYS_STUB
-Machine *machine;	// user program memory and registers
-#endif
+Machine *machine;	// 用户程序内存、寄存器、MIPS模拟器
+#endif              
 
 #ifdef NETWORK
-PostOffice *postOffice;
+PostOffice *postOffice;     // 网络
 #endif
 
 
@@ -80,7 +80,9 @@ TimerInterruptHandler(int dummy)
     if (currentThread->time_used >= TimeSlice && interrupt->getStatus() != IdleMode)
         interrupt->YieldOnReturn();
 #else
-    if (interrupt->getStatus() != IdleMode)
+//
+//printf("switch!\n");
+if (interrupt->getStatus() != IdleMode)
         interrupt->YieldOnReturn();
 
 #endif
@@ -155,13 +157,11 @@ Initialize(int argc, char **argv)
     stats = new Statistics();			// collect statistics
     interrupt = new Interrupt;			// start up interrupt handling
     scheduler = new Scheduler();		// initialize the ready queue
-    if (randomYield)				// start the timer (if needed)
-	    timer = new Timer(TimerInterruptHandler, 0, randomYield);
-    else{
-#if RR
-        timer = new Timer(TimerInterruptHandler, 0, randomYield);
-#endif
-    }
+    //if (randomYield)				// start the timer (if needed)
+	timer = new Timer(TimerInterruptHandler, 0, randomYield);
+
+        //timer = new Timer(TimerInterruptHandler, 0, randomYield);
+
 
 
     threadToBeDestroyed = NULL;
@@ -176,6 +176,7 @@ Initialize(int argc, char **argv)
     // We didn't explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a Thread
     // object to save its state.
+    // 
     currentThread = new Thread("main");		
     currentThread->setStatus(RUNNING);
 

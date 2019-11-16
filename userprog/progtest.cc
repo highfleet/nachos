@@ -19,7 +19,7 @@
 // 	Run a user program.  Open the executable, load it into
 //	memory, and jump to it.
 //----------------------------------------------------------------------
-
+ 
 void
 StartProcess(char *filename)
 {
@@ -31,11 +31,14 @@ StartProcess(char *filename)
 	return;
     }
     space = new AddrSpace(executable);    
-    currentThread->space = space;
+    currentThread->space = space;   // 已经帮我做了...?
+    currentThread->executable = executable;
 
-    delete executable;			// close file
+    //delete executable;			// close file
 
     space->InitRegisters();		// set the initial register values
+    
+    // Restore State 本来是为上下文切换准备的...
     space->RestoreState();		// load page table register
 
     machine->Run();			// jump to the user progam
@@ -81,4 +84,19 @@ ConsoleTest (char *in, char *out)
 	writeDone->P() ;        // wait for write to finish
 	if (ch == 'q') return;  // if q, quit
     }
+}
+
+/* Dummy wrapper */
+void 
+StartProcess1(int arg){
+    char *filename = (char *)arg;
+    StartProcess(filename);
+}
+
+void
+MultiProcessTest(char* filename){
+    Thread *Test = new Thread("userprog");
+    Test->Fork((VoidFunctionPtr)StartProcess1, filename);
+    StartProcess(filename);
+
 }

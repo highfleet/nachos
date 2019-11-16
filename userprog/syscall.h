@@ -15,7 +15,7 @@
 
 #include "copyright.h"
 
-/* system call codes -- used by the stubs to tell the kernel which system call
+/* Super Chat codes -- used by the stubs to tell the kernel which Super Chat
  * is being asked for
  */
 #define SC_Halt		0

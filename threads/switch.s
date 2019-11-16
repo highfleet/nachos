@@ -297,9 +297,9 @@ SWITCH
 ThreadRoot:
         pushl   %ebp
         movl    %esp,%ebp
-        pushl   InitialArg
-        call    *StartupPC
-        call    *InitialPC
+        pushl   InitialArg		# 栈传参
+        call    *StartupPC		# 开中断
+        call    *InitialPC		# 起始代码位置
         call    *WhenDonePC
 
         // NOT REACHED
@@ -322,8 +322,11 @@ ThreadRoot:
 ** to reference stuff on the stack, we add 4 to the offset.
 **
 */
-/* 关于栈指针ESP和返回地址PC */
-/* ESP是栈指针，0(ESP)中存储了PC */
+/*
+**	call函数时，会将返回地址PC压栈
+** 	ret时，必须让esp指向返回地址
+**
+*/
 
         .comm   _eax_save,4
 
@@ -356,7 +359,7 @@ SWITCH:
         movl    _ESP(%eax),%esp         # restore stack pointer
         movl    _PC(%eax),%eax          # restore return address into eax
         movl    %eax,4(%esp)            # copy over the ret address on the stack
-        movl    _eax_save,%eax
+        movl    _eax_save,%eax			# 以上两行多余的 两个线程的返回地址总是一样的
 
         ret
 

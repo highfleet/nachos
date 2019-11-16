@@ -27,11 +27,13 @@
 
 #ifndef MACHINE_H
 #define MACHINE_H
+//#define USE_TLB         // LAB 4
 
 #include "copyright.h"
 #include "utility.h"
 #include "translate.h"
 #include "disk.h"
+#include "bitmap.h"
 
 // Definitions related to the size, and format of user memory
 
@@ -40,6 +42,7 @@
 					// simplicity
 
 #define NumPhysPages    32
+#define NumSwapPages	64
 #define MemorySize 	(NumPhysPages * PageSize)
 #define TLBSize		4		// if there is a TLB, make it small
 
@@ -89,11 +92,13 @@ class Instruction {
   public:
     void Decode();	// decode the binary representation of the instruction
 
-    unsigned int value; // binary representation of the instruction
+    unsigned int value; // 32bit指令编码
 
     char opCode;     // Type of instruction.  This is NOT the same as the
     		     // opcode field from the instruction: see defs in mips.h
-    char rs, rt, rd; // Three registers from instruction.
+                     
+                     
+    char rs, rt, rd; // 源寄存器,目的寄存器,目标(特殊)寄存器....
     int extra;       // Immediate or target or shamt field or offset.
                      // Immediates are sign-extended.
 };
@@ -106,7 +111,7 @@ class Instruction {
 //	the system call interface to Nachos is not the same as UNIX 
 //	  (10 system calls in Nachos vs. 200 in UNIX!)
 // If we were to implement more of the UNIX system calls, we ought to be
-// able to run Nachos on top of Nachos!
+// able to run Nachos on top of Nachos! (意味深)
 //
 // The procedures in this class are defined in machine.cc, mipssim.cc, and
 // translate.cc.
@@ -162,6 +167,7 @@ class Machine {
 
     char *mainMemory;		// physical memory to store user program,
 				// code and data, while executing
+
     int registers[NumTotalRegs]; // CPU registers, for executing user programs
 
 
@@ -187,9 +193,13 @@ class Machine {
 					// "read-only" to Nachos kernel code
 
     TranslationEntry *pageTable;
+    BitMap *memoryMap; // Lab4 位图
+    BitMap *swapMap;	// Lab4 交换空间管理
+    OpenFile *swapSpace; 
+    TranslationEntry *page2Entry[NumPhysPages];	// 记录页表项所属的进程呢...
     unsigned int pageTableSize;
 
-  private:
+    private:
     bool singleStep;		// drop back into the debugger after each
 				// simulated instruction
     int runUntilTime;		// drop back into the debugger when simulated

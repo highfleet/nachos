@@ -5,10 +5,11 @@
 // Copyright (c) 1992-1993 The Regents of the University of California.
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
+// 正正经经的STL式Bitmap~!
 
 #include "copyright.h"
 #include "bitmap.h"
-
+ 
 //----------------------------------------------------------------------
 // BitMap::BitMap
 // 	Initialize a bitmap with "nitems" bits, so that every bit is clear.

@@ -27,19 +27,27 @@
 // In addition, there are some extra bits for access control (valid and 
 // read-only) and some bits for usage information (use and dirty).
 
+
 class TranslationEntry {
   public:
     int virtualPage;  	// The page number in virtual memory.
     int physicalPage;  	// The page number in real memory (relative to the
 			//  start of "mainMemory"
-    bool valid;         // If this bit is set, the translation is ignored.
-			// (In other words, the entry hasn't been initialized.)
+    int swapPage;   // 在交换空间中的位置
+    int fileAddr;   // 在可执行文件中的位置
+    bool valid;     // If this bit is set, the translation is ignored.
+                    // (In other words, the entry hasn't been initialized.)
     bool readOnly;	// If this bit is set, the user program is not allowed
 			// to modify the contents of the page.
     bool use;           // This bit is set by the hardware every time the
 			// page is referenced or modified.
     bool dirty;         // This bit is set by the hardware every time the
 			// page is modified.
+    int last_used;      // 上一次被使用的时间戳 适用于LRU
 };
 
+extern int memTime;
+extern int fifoPtr;
+extern int GetPage(TranslationEntry* PTE, bool lazy = false);
+extern void SwapoutPage(int page);
 #endif

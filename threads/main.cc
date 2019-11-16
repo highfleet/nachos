@@ -51,7 +51,6 @@
 #undef MAIN
 
 #include "utility.h"
-// 所有的系统模块类 声明都在sys.cc
 
 #include "system.h"
 
@@ -63,7 +62,7 @@ extern int testnum;
 
 extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
 extern void Print(char *file), PerformanceTest(void);
-extern void StartProcess(char *file), ConsoleTest(char *in, char *out);
+extern void StartProcess(char *file), ConsoleTest(char *in, char *out), MultiProcessTest(char* file);
 extern void MailTest(int networkID);
 
 // 测试用第三方c++程序
@@ -129,10 +128,16 @@ main(int argc, char **argv)
 	    ASSERT(argc > 1);
             StartProcess(*(argv + 1));
             argCount = 2;
-        } else if (!strcmp(*argv, "-c")) {      // test the console
+        } 
+        else if(!strcmp(*argv, "-m")){
+            ASSERT(argc > 1);
+            MultiProcessTest(*(argv + 1));
+            argCount = 2;
+        }
+        else if (!strcmp(*argv, "-c")) {      // test the console
 	    if (argc == 1)
 	        ConsoleTest(NULL, NULL);
-	    else {
+	    else { 
 		ASSERT(argc > 2);
 	        ConsoleTest(*(argv + 1), *(argv + 2));
 	        argCount = 3;
@@ -175,6 +180,8 @@ main(int argc, char **argv)
 #endif // NETWORK
     }
 
+
+	// 
     currentThread->Finish();	// NOTE: if the procedure "main" 
 				// returns, then the program "nachos"
 				// will exit (as any other normal program

@@ -36,7 +36,7 @@ static void DiskDone(int arg) { ((Disk *)arg)->HandleInterrupt(); }
 //
 //	"name" -- text name of the file simulating the Nachos disk
 //	"callWhenDone" -- interrupt handler to be called when disk read/write
-//	   request completes
+//	   request completes 外存读写完成 的 处理函数 (Disk负责模拟该中断)
 //	"callArg" -- argument to pass the interrupt handler
 //----------------------------------------------------------------------
 
@@ -51,9 +51,12 @@ Disk::Disk(char* name, VoidFunctionPtr callWhenDone, int callArg)
     lastSector = 0;
     bufferInit = 0;
     
+    // open函数的wrapper 返回喵述符
     fileno = OpenForReadWrite(name, FALSE);
     if (fileno >= 0) {		 	// file exists, check magic number 
 	Read(fileno, (char *) &magicNum, MagicSize);
+    // nachos 的磁盘文件是以 magic number 打头的...
+    // 这个Read是binary read
 	ASSERT(magicNum == MagicNumber);
     } else {				// file doesn't exist, create it
         fileno = OpenForWrite(name);
@@ -115,12 +118,17 @@ PrintSector (bool writing, int sector, char *data)
 void
 Disk::ReadRequest(int sectorNumber, char* data)
 {
+    // 为什么要模拟延迟呢
+    // 一般操作系统在对外存IO时会重新调度
+    // 但在ReadRequest这里不会
+    // 所以故意的设置一个计时中断
     int ticks = ComputeLatency(sectorNumber, FALSE);
 
     ASSERT(!active);				// only one request at a time
     ASSERT((sectorNumber >= 0) && (sectorNumber < NumSectors));
     
     DEBUG('d', "Reading from sector %d\n", sectorNumber);
+    // 设置指针
     Lseek(fileno, SectorSize * sectorNumber + MagicSize, 0);
     Read(fileno, data, SectorSize);
     if (DebugIsEnabled('d'))
@@ -227,6 +235,7 @@ Disk::ModuloDiff(int to, int from)
 //   	read requests to the current track to be satisfied more quickly.
 //   	The contents of the track buffer are discarded after every seek to 
 //   	a new track.
+// 所谓的track  buffer 也只是让这里快一点
 //----------------------------------------------------------------------
 
 int
