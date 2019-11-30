@@ -1,7 +1,7 @@
 // directory.h 
 //	Data structures to manage a UNIX-like directory of file names.
 // 
-//      A directory is a table of pairs: <file name, sector #>,
+//  A directory is a table of pairs: <file name, sector #>,
 //	giving the name of each file in the directory, and 
 //	where to find its file header (the data structure describing
 //	where to find the file's data blocks) on disk.
@@ -29,7 +29,7 @@
 // Internal data structures kept public so that Directory operations can
 // access them directly.
 
-class DirectoryEntry {
+class DirectoryEntry { // 16byte
   public:
     bool inUse;				// Is this directory entry in use?
     int sector;				// Location on disk to find the 

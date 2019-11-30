@@ -64,10 +64,13 @@ Machine::Machine(bool debug)
       	mainMemory[i] = 0;
     memoryMap = new BitMap(NumPhysPages); // 初始化位图
     swapMap = new BitMap(NumSwapPages);    // 交换空间管理
+    
+// #ifdef USER_PROGRAM
+//     fileSystem->Create("SwapSpace", NumSwapPages * PageSize);
+//     swapSpace = fileSystem->Open("SwapSpace");
+// #endif    
 
-    fileSystem->Create("SwapSpace", NumSwapPages * PageSize);
-    swapSpace = fileSystem->Open("SwapSpace");
-    ASSERT(swapSpace != NULL);
+
 
 #ifdef USE_TLB
     tlb = new TranslationEntry[TLBSize];

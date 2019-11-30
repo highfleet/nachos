@@ -23,6 +23,8 @@
 #include "copyright.h"
 #include "utility.h"
 
+extern void updateTime(char *into);
+
 #ifdef FILESYS_STUB			// Temporarily implement calls to 
 					// Nachos file system as calls to UNIX!
 					// See definitions listed under #else

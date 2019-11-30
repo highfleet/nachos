@@ -87,7 +87,7 @@ Directory::WriteBack(OpenFile *file)
 //	"name" -- the file name to look up
 //----------------------------------------------------------------------
 
-int
+int 
 Directory::FindIndex(char *name)
 {
     for (int i = 0; i < tableSize; i++)
@@ -95,7 +95,7 @@ Directory::FindIndex(char *name)
 	    return i;
     return -1;		// name not in directory
 }
-
+ 
 //----------------------------------------------------------------------
 // Directory::Find
 // 	Look up file name in directory, and return the disk sector number

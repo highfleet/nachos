@@ -72,6 +72,8 @@ FileHeader::Deallocate(BitMap *freeMap)
 // 	Fetch contents of file header from disk. 
 //
 //	"sector" is the disk sector containing the file header
+//  如何将对象写入磁盘？
+//  nachos给你答案~
 //----------------------------------------------------------------------
 
 void
@@ -132,9 +134,14 @@ FileHeader::Print()
     int i, j, k;
     char *data = new char[SectorSize];
 
+    // 打印属性信息
+    printf("Type: %s ; Created: %s\n", type, timeCreate);
+    printf("Last access: %s\n", timeAccess);
+    printf("Last modify: %s\n", timeModify);
     printf("FileHeader contents.  File size: %d.  File blocks:\n", numBytes);
     for (i = 0; i < numSectors; i++)
 	printf("%d ", dataSectors[i]);
+
     printf("\nFile contents:\n");
     for (i = k = 0; i < numSectors; i++) {
 	synchDisk->ReadSector(dataSectors[i], data);

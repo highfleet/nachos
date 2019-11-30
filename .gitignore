@@ -1,3 +1,6 @@
 
 *.o
 test/*
+filesys/test/big
+filesys/test/medium
+filesys/test/small

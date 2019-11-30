@@ -15,9 +15,14 @@
 #include "filehdr.h"
 #include "openfile.h"
 #include "system.h"
-#ifdef HOST_SPARC
 #include <strings.h>
-#endif 
+#include <time.h>
+
+void updateTime(char *into){
+    time_t timer;
+    time(&timer);
+    strncpy(into, asctime(gmtime(&timer)), 24);
+}
 
 //----------------------------------------------------------------------
 // OpenFile::OpenFile
@@ -123,7 +128,7 @@ OpenFile::ReadAt(char *into, int numBytes, int position)
     if ((numBytes <= 0) || (position >= fileLength))
     	return 0; 				// check request
     if ((position + numBytes) > fileLength)		
-	numBytes = fileLength - position;
+	numBytes = fileLength - position;   // 越界截断
     DEBUG('f', "Reading %d bytes at %d, from file of length %d.\n", 	
 			numBytes, position, fileLength);
 

@@ -8,7 +8,7 @@
 # of liability and disclaimer of warranty provisions.
 
 # 这个参数控制main启动不同的操作系统部分
-DEFINES = -DTHREADS
+DEFINES = -DTHREADS 
 INCPATH = -I../threads -I../machine
 HFILES = $(THREAD_H)
 CFILES = $(THREAD_C)

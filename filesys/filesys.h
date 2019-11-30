@@ -34,7 +34,7 @@
 
 #ifndef FS_H
 #define FS_H
-
+ 
 #include "copyright.h"
 #include "openfile.h"
 
@@ -46,14 +46,17 @@ class FileSystem {
     FileSystem(bool format) {}
 
     bool Create(char *name, int initialSize) { 
+	    // 使用UNIX open创建一个新文件 打开/覆盖
 	int fileDescriptor = OpenForWrite(name);
-
+	// 大小任意	
+	
 	if (fileDescriptor == -1) return FALSE;
 	Close(fileDescriptor); 
 	return TRUE; 
 	}
 
     OpenFile* Open(char *name) {
+	// 一般与Creat连用
 	  int fileDescriptor = OpenForReadWrite(name, FALSE);
 
 	  if (fileDescriptor == -1) return NULL;
@@ -95,3 +98,4 @@ class FileSystem {
 #endif // FILESYS
 
 #endif // FS_H
+

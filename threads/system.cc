@@ -198,6 +198,14 @@ Initialize(int argc, char **argv)
 #ifdef NETWORK
     postOffice = new PostOffice(netname, rely, 10);
 #endif
+
+#ifdef USER_PROGRAM //lab4
+    // 创建交换文件必须在文件系统初始化完成以后
+    fileSystem->Create("SwapSpace", NumSwapPages * PageSize);
+    machine->swapSpace = fileSystem->Open("SwapSpace");
+    ASSERT(machine->swapSpace != NULL);
+#endif
+
 }
 
 //----------------------------------------------------------------------

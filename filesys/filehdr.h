@@ -10,14 +10,14 @@
 // of liability and disclaimer of warranty provisions.
 
 #include "copyright.h"
-
+ 
 #ifndef FILEHDR_H
 #define FILEHDR_H
 
 #include "disk.h"
 #include "bitmap.h"
 
-#define NumDirect 	((SectorSize - 2 * sizeof(int)) / sizeof(int))
+#define NumDirect 	((SectorSize - 2 * sizeof(int) - 25 * 3 - 5) / sizeof(int))
 #define MaxFileSize 	(NumDirect * SectorSize)
 
 // The following class defines the Nachos "file header" (in UNIX terms,  
@@ -56,11 +56,15 @@ class FileHeader {
 
     void Print();			// Print the contents of the file.
 
+    char type[5];
+    char timeCreate[25];  // 创建时间
+    char timeModify[25];  // 修改时间
+    char timeAccess[25];  // 访问时间
+
   private:
     int numBytes;			// Number of bytes in the file
     int numSectors;			// Number of data sectors in the file
     int dataSectors[NumDirect];		// Disk sector numbers for each data 
-					// block in the file
+					// block in the file  30*sector = 3840b
 };
-
 #endif // FILEHDR_H
