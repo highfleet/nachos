@@ -43,11 +43,28 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
 { 
     numBytes = fileSize;
     numSectors  = divRoundUp(fileSize, SectorSize);
-    if (freeMap->NumClear() < numSectors)
-	return FALSE;		// not enough space
+    int numSector = numSectors;
+    if (freeMap->NumClear() < numSectors + (numSectors - NumFirstIndex) / IndexPerSector)
+        return FALSE; // not enough space
 
-    for (int i = 0; i < numSectors; i++)
-	dataSectors[i] = freeMap->Find();
+    for (int i = 0; i < NumFirstIndex && numSector; i++){
+        dataSectors[i] = freeMap->Find();
+        numSector--;
+    }
+
+    //使用二级索引
+    for (int i = 0;numSector; i++){
+        int secondIndex[IndexPerSector];
+        int sector = freeMap->Find();
+        dataSectors[i + NumFirstIndex] = sector;
+
+        for (int j = 0; j < IndexPerSector && numSector; j++){
+            secondIndex[j] = freeMap->Find();
+            numSector--;
+        }
+        synchDisk->WriteSector(sector, (char *)secondIndex);
+    }
+
     return TRUE;
 }
 
@@ -61,10 +78,24 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
 void 
 FileHeader::Deallocate(BitMap *freeMap)
 {
-    for (int i = 0; i < numSectors; i++) {
-	ASSERT(freeMap->Test((int) dataSectors[i]));  // ought to be marked!
-	freeMap->Clear((int) dataSectors[i]);
+    for (int i = 0; i < NumFirstIndex && numSectors; i++){
+        ASSERT(freeMap->Test((int) dataSectors[i]));  // ought to be marked!
+        freeMap->Clear((int) dataSectors[i]);
+        numSectors--;
     }
+    
+    for (int i = 0; numSectors; i++){
+        ASSERT(i < NumSecondIndex);
+        int secondIndex[IndexPerSector];
+        int sector = dataSectors[i + NumFirstIndex];
+        synchDisk->ReadSector(sector, (char *)secondIndex);
+
+        for (int j = 0; j < IndexPerSector && numSectors; j++){
+            freeMap->Clear(secondIndex[j]);
+            numSectors--;
+        }
+    }
+
 }
 
 //----------------------------------------------------------------------
@@ -106,9 +137,22 @@ FileHeader::WriteBack(int sector)
 //----------------------------------------------------------------------
 
 int
+FileHeader::IndexToSector(int index){
+    // 将扇区序号转换为真正内容所在的扇区...!
+    if(index < NumFirstIndex)
+        return dataSectors[index];
+    int sector = dataSectors[NumFirstIndex + (index - NumFirstIndex) / IndexPerSector];
+    int secondIndex[IndexPerSector];
+    synchDisk->ReadSector(sector, (char *)secondIndex);
+    return secondIndex[(index - NumFirstIndex) % IndexPerSector];
+}
+
+int
 FileHeader::ByteToSector(int offset)
 {
-    return(dataSectors[offset / SectorSize]);
+    //return(dataSectors[offset / SectorSize]);
+    int index = offset / SectorSize;
+    return IndexToSector(index);
 }
 
 //----------------------------------------------------------------------
@@ -140,18 +184,18 @@ FileHeader::Print()
     printf("Last modify: %s\n", timeModify);
     printf("FileHeader contents.  File size: %d.  File blocks:\n", numBytes);
     for (i = 0; i < numSectors; i++)
-	printf("%d ", dataSectors[i]);
+        printf("%d ", IndexToSector(i));
 
     printf("\nFile contents:\n");
     for (i = k = 0; i < numSectors; i++) {
-	synchDisk->ReadSector(dataSectors[i], data);
+        synchDisk->ReadSector(IndexToSector(i), data);
         for (j = 0; (j < SectorSize) && (k < numBytes); j++, k++) {
-	    if ('\040' <= data[j] && data[j] <= '\176')   // isprint(data[j])
-		printf("%c", data[j]);
+        if ('\040' <= data[j] && data[j] <= '\176')   // isprint(data[j])
+        printf("%c", data[j]);
             else
-		printf("\\%x", (unsigned char)data[j]);
-	}
-        printf("\n"); 
+        printf("\\%x", (unsigned char)data[j]);
+    }
+    printf("\n"); 
     }
     delete [] data;
 }

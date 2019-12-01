@@ -18,6 +18,9 @@
 #include "bitmap.h"
 
 #define NumDirect 	((SectorSize - 2 * sizeof(int) - 25 * 3 - 5) / sizeof(int))
+#define NumFirstIndex 8 //直接索引块数目
+#define NumSecondIndex 2
+#define IndexPerSector (SectorSize / sizeof(int))
 #define MaxFileSize 	(NumDirect * SectorSize)
 
 // The following class defines the Nachos "file header" (in UNIX terms,  
@@ -46,10 +49,10 @@ class FileHeader {
     void FetchFrom(int sectorNumber); 	// Initialize file header from disk
     void WriteBack(int sectorNumber); 	// Write modifications to file header
 					//  back to disk
-
-    int ByteToSector(int offset);	// Convert a byte offset into the file
-					// to the disk sector containing
-					// the byte
+    int IndexToSector(int index);
+    int ByteToSector(int offset); // Convert a byte offset into the file
+                                  // to the disk sector containing
+                                  // the byte
 
     int FileLength();			// Return the length of the file 
 					// in bytes
