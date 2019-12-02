@@ -20,6 +20,7 @@
 #include "thread.h"
 #include "disk.h"
 #include "stats.h"
+#include "directory.h"
 
 #define TransferSize 	10 	// make it small, just to be difficult
 
@@ -69,6 +70,10 @@ Copy(char *from, char *to)
     fclose(fp);
 }
 
+void MakeDir(char* name){
+    fileSystem->CreateDir(name);
+}
+
 //----------------------------------------------------------------------
 // Print
 // 	Print the contents of the Nachos file "name".
@@ -94,6 +99,14 @@ Print(char *name)
 
     delete openFile;		// close the Nachos file
     return;
+}
+
+void PrintDirectory(char* name)
+{
+    OpenFile *dirFile = fileSystem->Open(name);
+    Directory *dir = new Directory(NumDirEntries);
+    dir->FetchFrom(dirFile);
+    dir->Print();
 }
 
 //----------------------------------------------------------------------

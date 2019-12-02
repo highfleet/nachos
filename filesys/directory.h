@@ -19,7 +19,8 @@
 
 #include "openfile.h"
 
-#define FileNameMaxLen 		14	// for simplicity, we assume 
+#define NumDirEntries 		14
+#define FileNameMaxLen 		9	// for simplicity, we assume 
 					// file names are <= 9 characters long
 
 // The following class defines a "directory entry", representing a file
@@ -32,11 +33,13 @@
 class DirectoryEntry { // 16byte
   public:
     char name[FileNameMaxLen + 1];
-    bool inUse;				// Is this directory entry in use?
+    bool inUse :1;   // Is this directory entry in use? 
+    bool isDir :1;		// Is this a directory?		
     int sector;				// Location on disk to find the 
-					//   FileHeader for this file 
+					// FileHeader for this file 
     	    // Text name for file, with +1 for 
-					// the trailing '\0'
+					// the trailing '\0' 
+    
 };
 
 // The following class defines a UNIX-like "directory".  Each entry in
@@ -62,7 +65,7 @@ class Directory {
     int Find(char *name);		// Find the sector number of the 
 					// FileHeader for file: "name"
 
-    bool Add(char *name, int newSector);  // Add a file name into the directory
+    bool Add(char *name, int newSector, bool isDir = FALSE);  // Add a file name into the directory
 
     bool Remove(char *name);		// Remove a file from the directory
 
@@ -70,15 +73,20 @@ class Directory {
 					//  in the directory
     void Print();			// Verbose print of the contents
 					//  of the directory -- all the file
-					//  names and their contents.
+					//  names and their contents
+    int goTo(char *cpath);
+    int FindIndex(char *name);		// Find the index into the directory 
+					//  table corresponding to "name"
+          
+    DirectoryEntry *getTable() { return table; }
 
   private:
+    
     int tableSize;			// Number of directory entries
     DirectoryEntry *table;		// Table of pairs: 
 					// <file name, file header location> 
 
-    int FindIndex(char *name);		// Find the index into the directory 
-					//  table corresponding to "name"
+    
 };
 
 #endif // DIRECTORY_H

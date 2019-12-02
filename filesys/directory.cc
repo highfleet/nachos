@@ -127,7 +127,7 @@ Directory::Find(char *name)
 //----------------------------------------------------------------------
 
 bool
-Directory::Add(char *name, int newSector)
+Directory::Add(char *name, int newSector, bool isDir = FALSE)
 { 
     if (FindIndex(name) != -1)
 	return FALSE;
@@ -137,10 +137,13 @@ Directory::Add(char *name, int newSector)
             table[i].inUse = TRUE;
             strncpy(table[i].name, name, FileNameMaxLen); 
             table[i].sector = newSector;
-        return TRUE;
-	}
+            table[i].isDir = isDir;
+            return TRUE;
+    }
     return FALSE;	// no space.  Fix when we have extensible files.
 }
+
+
 
 //----------------------------------------------------------------------
 // Directory::Remove
@@ -188,10 +191,36 @@ Directory::Print()
     printf("Directory contents:\n");
     for (int i = 0; i < tableSize; i++)
 	if (table[i].inUse) {
-	    printf("Name: %s, Sector: %d\n", table[i].name, table[i].sector);
+	    printf("Name: %s, Sector: %d, IsDirectory: %s\n", table[i].name, table[i].sector, table[i].isDir?"True":"False");
 	    hdr->FetchFrom(table[i].sector);
 	    hdr->Print();
 	}
     printf("\n");
     delete hdr;
+}
+
+#define DirectorySector 1
+#define MaxPathLength 100
+/*
+ *  /A/B/C/ -> goto dir C
+ * 
+ */
+int
+Directory::goTo(char* cpath){
+    char* path = new char[MaxPathLength];
+    strncpy(path, cpath, MaxPathLength);
+    int sector = DirectorySector;
+
+    //curDir->Print();
+    char *nullPtr = path ++;    // nununu
+    while((nullPtr = strchr(path, '/'))!=NULL){
+        Directory *curDir = new Directory(NumDirEntries);
+        OpenFile *directoryFile = new OpenFile(sector);
+        curDir->FetchFrom(directoryFile);
+        *nullPtr = 0;
+        printf("Finding dir %s...\n", path);
+        sector = curDir->Find(path);
+        path = nullPtr + 1;
+    }
+    return sector;
 }

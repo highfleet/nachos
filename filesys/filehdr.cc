@@ -44,7 +44,7 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
     numBytes = fileSize;
     numSectors  = divRoundUp(fileSize, SectorSize);
     int numSector = numSectors;
-    if (freeMap->NumClear() < numSectors + (numSectors - NumFirstIndex) / IndexPerSector)
+    if (freeMap->NumClear() < numSectors )//+ (numSectors - NumFirstIndex) / IndexPerSector)
         return FALSE; // not enough space
 
     for (int i = 0; i < NumFirstIndex && numSector; i++){
@@ -58,14 +58,44 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
         int sector = freeMap->Find();
         dataSectors[i + NumFirstIndex] = sector;
 
-        for (int j = 0; j < IndexPerSector && numSector; j++){
+        for (int j = 0; j < IndexPerSector && numSector--; j++)
             secondIndex[j] = freeMap->Find();
-            numSector--;
-        }
+        
         synchDisk->WriteSector(sector, (char *)secondIndex);
     }
 
     return TRUE;
+}
+
+//----------------------------------------------------------------------
+// FileHeader::Grow
+//  bytes: 
+// 	在原文件长度的基础上, 文件又增长了bytes字节...
+//----------------------------------------------------------------------
+
+bool
+FileHeader::Grow(BitMap* freeMap, int bytes){
+    int maxLength = numSectors * SectorSize;
+    if(bytes+numBytes<=maxLength){
+        numBytes += bytes;
+        return TRUE;
+    }
+    int increaseSectors = (bytes + numBytes - maxLength)/SectorSize;
+    if(freeMap->NumClear()< increaseSectors )
+        return FALSE;
+
+    // 优先分配直接索引的
+    for (; numSectors < NumFirstIndex && increaseSectors--;)
+        dataSectors[numSectors++] = freeMap->Find();
+    
+    while(increaseSectors){
+        int sector = dataSectors[NumFirstIndex + (numSectors - NumFirstIndex) / IndexPerSector];
+        int secondIndex[IndexPerSector];
+        synchDisk->ReadSector(sector, (char *)secondIndex);
+        secondIndex[(numSectors - NumFirstIndex) % IndexPerSector] = freeMap->Find();
+        synchDisk->WriteSector(sector, (char *)secondIndex);
+        numSectors++, increaseSectors--;
+    }
 }
 
 //----------------------------------------------------------------------

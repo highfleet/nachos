@@ -62,6 +62,7 @@ extern int testnum;
 
 extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
 extern void Print(char *file), PerformanceTest(void);
+extern void MakeDir(char* name), PrintDirectory(char* name);
 extern void StartProcess(char *file), ConsoleTest(char *in, char *out), MultiProcessTest(char *file);
 extern void MailTest(int networkID);
 
@@ -161,10 +162,21 @@ int main(int argc, char **argv)
 			Copy(*(argv + 1), *(argv + 2));
 			argCount = 3;
 		}
+		else if (!strcmp(*argv, "-mkdir")){
+			//新建文件夹
+			ASSERT(argc > 1);
+			MakeDir(*(argv+1));
+		}
 		else if (!strcmp(*argv, "-p"))
 		{ // print a Nachos file
 			ASSERT(argc > 1);
 			Print(*(argv + 1));
+			argCount = 2;
+		}
+		else if (!strcmp(*argv, "-pd"))
+		{ // print a Nachos directory
+			ASSERT(argc > 1);
+			PrintDirectory(*(argv + 1));
 			argCount = 2;
 		}
 		else if (!strcmp(*argv, "-r"))
