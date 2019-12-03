@@ -135,5 +135,60 @@ class Condition {
     char* name;
     List *queue;
 };
+
+class ReaderWriter{
+    int readerCnt;
+    Lock *reader, *mutex;
+public:
+    ReaderWriter(){
+        readerCnt = 0;
+        reader = new Lock("reader");
+        mutex = new Lock("mutex");
+    }
+    void ReaderIn(){
+      //printf("Start reading...\n");
+        reader->Acquire();
+        if(!readerCnt)
+            mutex->Acquire();
+        readerCnt++;
+        reader->Release();
+        
+    }
+    void ReaderOut(){
+        //printf("Finish reading...\n");
+        reader->Acquire();
+        readerCnt--;
+        if(!readerCnt)
+            mutex->Release();
+        reader->Release();
+        
+    }
+    void WriterIn(){
+      //printf("Start writing...\n");
+      mutex->Acquire();
+      
+      }
+    void WriterOut(){
+      mutex->Release();
+      //printf("Finish writing...\n");
+    }
+    
+};
+
+class OpenFileEntry{
+public:
+	int sector;
+	int refcnt;
+	bool remove;
+	char path[100];
+	ReaderWriter *rwLock;
+	OpenFileEntry(int s, char* p):sector(s){
+		refcnt = 0, remove = FALSE;
+		rwLock = new ReaderWriter();
+		if(p!=NULL)strncpy(path, p, 100);
+	}
+};
+
+
 #endif // SYNCH_H
 

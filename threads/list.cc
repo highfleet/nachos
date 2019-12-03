@@ -242,7 +242,14 @@ List::SortedRemove(int *keyPtr)
     return thing;
 }
 
-
+void*   //找到指定key的元素...
+List::Find(int key){
+    ListElement *ptr;
+    for (ptr = first; ptr != NULL; ptr = ptr->next)
+        if(ptr->key == key)
+            return ptr->item;
+    return NULL;
+}
 
 void
 List::Remove(void *item)

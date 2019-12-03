@@ -16,12 +16,12 @@
 // Copyright (c) 1992-1993 The Regents of the University of California.
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
-
 #ifndef OPENFILE_H
 #define OPENFILE_H
 
 #include "copyright.h"
 #include "utility.h"
+#include "list.h"
 
 extern void updateTime(char *into);
 
@@ -62,10 +62,11 @@ class OpenFile {
 
 #else // FILESYS
 class FileHeader;
+class OpenFileEntry;  // 声明外部定义的类...
 
 class OpenFile {
   public:
-    OpenFile(int sector);		// Open a file whose header is located
+    OpenFile(int sector, char* path = NULL);		// Open a file whose header is located
 					// at "sector" on the disk
     ~OpenFile();			// Close the file
 
@@ -91,9 +92,10 @@ class OpenFile {
   private:
 	  int sectorPosition;
 	  FileHeader *hdr;  // Header for this file
-	  int seekPosition; // Current position within the file
+    OpenFileEntry *entry;
+    int seekPosition; // Current position within the file
 };
 
 #endif // FILESYS
-
+// Synch int 
 #endif // OPENFILE_H

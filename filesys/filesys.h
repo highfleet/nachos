@@ -32,11 +32,14 @@
 // All rights reserved.  See copyright.h for copyright notice and limitation 
 // of liability and disclaimer of warranty provisions.
 
+
 #ifndef FS_H
 #define FS_H
- 
+
 #include "copyright.h"
 #include "openfile.h"
+
+extern List *openFileList;
 
 // Sectors containing the file headers for the bitmap of free sectors,
 // and the directory of files.  These file headers are placed in well-known 
@@ -51,7 +54,7 @@
 #define DirectoryFileSize 	(sizeof(DirectoryEntry) * NumDirEntries)
 
 #ifdef FILESYS_STUB 		// Temporarily implement file system calls as 
-				// calls to UNIX, until the real file system
+				// calsl to UNIX, until the real file system
 				// implementation is available
 class FileSystem {
   public:
@@ -110,6 +113,5 @@ class FileSystem {
 };
 
 #endif // FILESYS
-
 #endif // FS_H
 

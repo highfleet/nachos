@@ -15,13 +15,18 @@
 #include "filehdr.h"
 #include "openfile.h"
 #include "system.h"
+#include "filesys.h"
+#include "synch.h"
 #include <strings.h>
 #include <time.h>
+
+List *openFileList;
 
 void updateTime(char *into){
     time_t timer;
     time(&timer);
     strncpy(into, asctime(gmtime(&timer)), 24);
+    
 }
 
 //----------------------------------------------------------------------
@@ -32,12 +37,18 @@ void updateTime(char *into){
 //	"sector" -- the location on disk of the file header for this file
 //----------------------------------------------------------------------
 
-OpenFile::OpenFile(int sector)
+OpenFile::OpenFile(int sector, char* path = NULL)
 { 
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
     sectorPosition = sector;
+    entry = (OpenFileEntry*)openFileList->Find(sector);
+    if(entry==NULL){
+        entry = new OpenFileEntry(sector, path);
+        openFileList->SortedInsert((void *)entry, sector);
+    }
+    entry->refcnt++;
 }
 
 //----------------------------------------------------------------------
@@ -47,6 +58,14 @@ OpenFile::OpenFile(int sector)
 
 OpenFile::~OpenFile()
 {
+    entry->refcnt--;
+    printf("deconstructing... %s refcnt %d\n", entry->path, entry->refcnt);
+    if (!entry->refcnt)
+    {
+        if(entry->remove&&entry->path)
+            fileSystem->Remove(entry->path);
+        openFileList->Remove(entry);
+    }
     delete hdr;
 }
 
@@ -80,17 +99,23 @@ OpenFile::Seek(int position)
 int
 OpenFile::Read(char *into, int numBytes)
 {
-   int result = ReadAt(into, numBytes, seekPosition);
-   seekPosition += result;
-   return result;
+    entry->rwLock->ReaderIn();
+    int result = ReadAt(into, numBytes, seekPosition);
+    seekPosition += result;
+    entry->rwLock->ReaderOut();
+    return result;
+    
 }
 
 int
 OpenFile::Write(char *into, int numBytes)
 {
-   int result = WriteAt(into, numBytes, seekPosition);
-   seekPosition += result;
-   return result;
+    entry->rwLock->WriterIn();
+    int result = WriteAt(into, numBytes, seekPosition);
+    seekPosition += result;
+    entry->rwLock->WriterOut();
+    return result;
+    
 }
 
 //----------------------------------------------------------------------
@@ -122,14 +147,19 @@ OpenFile::Write(char *into, int numBytes)
 int
 OpenFile::ReadAt(char *into, int numBytes, int position)
 {
+    //printf("Start reading...\n");
+    //entry->rwLock->ReaderIn();
+
     int fileLength = hdr->FileLength();
     int i, firstSector, lastSector, numSectors;
     char *buf;
 
-    if ((numBytes <= 0) || (position >= fileLength))
-    	return 0; 				// check request
+    if ((numBytes <= 0) || (position >= fileLength)){
+        //entry->rwLock->ReaderOut();
+        return 0; // check request
+    }
     if ((position + numBytes) > fileLength)		
-	numBytes = fileLength - position;   // 越界截断
+	    numBytes = fileLength - position;   // 越界截断
     DEBUG('f', "Reading %d bytes at %d, from file of length %d.\n", 	
 			numBytes, position, fileLength);
 
@@ -146,12 +176,15 @@ OpenFile::ReadAt(char *into, int numBytes, int position)
     // copy the part we want
     bcopy(&buf[position - (firstSector * SectorSize)], into, numBytes);
     delete [] buf;
+    //entry->rwLock->ReaderOut();
+    
     return numBytes;
 }
 
 int
 OpenFile::WriteAt(char *from, int numBytes, int position)
 {
+    //entry->rwLock->WriterIn();
     int fileLength = hdr->FileLength();
     int i, firstSector, lastSector, numSectors;
     bool firstAligned, lastAligned;
@@ -163,8 +196,10 @@ OpenFile::WriteAt(char *from, int numBytes, int position)
             numBytes = fileLength - position;
         hdr->WriteBack(sectorPosition);
     }
-    if (numBytes<=0)
+    if (numBytes<=0){
+        //entry->rwLock->WriterOut();
         return 0;
+    }
 
     DEBUG('f', "Writing %d bytes at %d, from file of length %d.\n", 	
 			numBytes, position, fileLength);
@@ -193,6 +228,8 @@ OpenFile::WriteAt(char *from, int numBytes, int position)
         synchDisk->WriteSector(hdr->ByteToSector(i * SectorSize), 
 					&buf[(i - firstSector) * SectorSize]);
     delete [] buf;
+    //entry->rwLock->WriterOut();
+    //printf("Finish Writing...\n");
     return numBytes;
 }
 

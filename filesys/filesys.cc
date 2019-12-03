@@ -50,6 +50,7 @@
 #include "directory.h"
 #include "filehdr.h"
 #include "filesys.h"
+#include "synch.h"
 #include <string.h>
 
 // 从路径获得最后一级用户名
@@ -58,7 +59,9 @@
 char* getName(char* path){
     char *name = strrchr(path, '/');
     return name == NULL ? path : name + 1;
+    
 }
+
 
 //----------------------------------------------------------------------
 // FileSystem::FileSystem
@@ -76,12 +79,16 @@ char* getName(char* path){
 FileSystem::FileSystem(bool format)
 {
     DEBUG('f', "Initializing the file system.\n");
+    openFileList = new class List();
+    
+
     if (format)
     {
         BitMap *freeMap = new BitMap(NumSectors);            //1024 sector
         Directory *directory = new Directory(NumDirEntries); //根目录文件
         FileHeader *mapHdr = new FileHeader;
         FileHeader *dirHdr = new FileHeader;
+        
 
         DEBUG('f', "Formatting the file system.\n");
 
@@ -270,9 +277,9 @@ FileSystem::Open(char *name)
     directory->FetchFrom(curDirFile);
     sector = directory->Find(fileName);
 
-    DEBUG('f', "Opening file %s At sector %d\n", fileName, sector);
+    DEBUG('f', "Opening file %s at sector %d\n", fileName, sector);
     if (sector >= 0)
-        openFile = new OpenFile(sector); // name was found in directory
+        openFile = new OpenFile(sector, name); // name was found in directory
     delete directory;
     return openFile; // return NULL if not found
 }
@@ -302,11 +309,21 @@ bool FileSystem::Remove(char *name, int directorySector = -1)
     char *fileName = getName(name); //获得文件名desu
 
     if(directorySector == -1)
-        int directorySector = directory->goTo(name);
+        directorySector = directory->goTo(name);
     
     OpenFile *curDirFile = new OpenFile(directorySector);
     directory->FetchFrom(curDirFile);
     int sector = directory->Find(fileName);
+
+    OpenFileEntry *fileEntry = (OpenFileEntry*)openFileList->Find(sector);
+    printf("Deleting file %s...\n", name);
+    if (fileEntry != NULL && fileEntry->refcnt > 0)
+    {
+        fileEntry->remove = TRUE;
+        printf("FAILED\n");
+        return FALSE;
+    }
+
     int index = directory->FindIndex(fileName);
     if(directory->getTable()[index].isDir){
         OpenFile* dirFile = new OpenFile(sector);
@@ -322,6 +339,7 @@ bool FileSystem::Remove(char *name, int directorySector = -1)
         delete directory;
         return FALSE; // file not found
     }
+    
     fileHdr = new FileHeader;
     fileHdr->FetchFrom(sector);
 

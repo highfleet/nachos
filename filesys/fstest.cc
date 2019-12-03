@@ -132,7 +132,7 @@ void PrintDirectory(char* name)
 #define FileName 	"TestFile"
 #define Contents 	"1234567890"
 #define ContentSize 	strlen(Contents)
-#define FileSize 	((int)(ContentSize * 5000))
+#define FileSize 	((int)(ContentSize * 500))
 
 static void 
 FileWrite()
@@ -144,7 +144,7 @@ FileWrite()
 	FileSize, ContentSize);
     if (!fileSystem->Create(FileName, 0)) {
       printf("Perf test: can't create %s\n", FileName);
-      return;
+      //return;
     }
     openFile = fileSystem->Open(FileName);
     if (openFile == NULL) {
@@ -153,11 +153,14 @@ FileWrite()
     }
     for (i = 0; i < FileSize; i += ContentSize) {
         numBytes = openFile->Write(Contents, ContentSize);
-	if (numBytes < 10) {
-	    printf("Perf test: unable to write %s\n", FileName);
-	    delete openFile;
-	    return;
-	}
+        if(i==100)
+            fileSystem->Remove(FileName);
+        if (numBytes < 10)
+        {
+            printf("Perf test: unable to write %s\n", FileName);
+            delete openFile;
+            return;
+        }
     }
     delete openFile;	// close file
 }
@@ -204,3 +207,10 @@ PerformanceTest()
     stats->Print();
 }
 
+void 
+TestSynchWrite(){
+    Thread *Test = new Thread("userprog");
+    Test->Fork((VoidFunctionPtr)FileWrite, 0);
+    //FileWrite();
+    //fileSystem->Remove(FileName);
+}

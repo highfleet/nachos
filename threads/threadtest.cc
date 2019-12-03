@@ -280,56 +280,53 @@ void BarrierTest(){
 // 	
 //----------------------------------------------------------------------
 
-class ReaderWriter{
+class ReaderWriter1{
     int readerCnt;
     Lock *reader, *mutex;
 public:
-    ReaderWriter(){
+    ReaderWriter1(){
         readerCnt = 0;
         reader = new Lock("reader");
         mutex = new Lock("mutex");
     }
-    void Read(){
+    void ReaderIn(){
         reader->Acquire();
         if(!readerCnt)
             mutex->Acquire();
         readerCnt++;
         reader->Release();
-        printf("Read buffer...\n");
-        currentThread->Yield();
-        printf("Read finished...\n");
+    }
+    void ReaderOut(){
         reader->Acquire();
         readerCnt--;
         if(!readerCnt)
             mutex->Release();
         reader->Release();
     }
-    void Write(){
-        mutex->Acquire();
-        printf("Write to buffer...\n");
-        mutex->Release();
-    }
+    void WriterIn(){mutex->Acquire();}
+    void WriterOut(){mutex->Release();}
+    
 };
 
-void Reader(int b){
-    ReaderWriter *buffer = (ReaderWriter *)b;
-    buffer->Read();
-}
+// void Reader(int b){
+//     ReaderWriter *buffer = (ReaderWriter *)b;
+//     buffer->Read();
+// }
 
-void Writer(int b){
-    ReaderWriter *buffer = (ReaderWriter *)b;
-    buffer->Write();
-}
+// void Writer(int b){
+//     ReaderWriter *buffer = (ReaderWriter *)b;
+//     buffer->Write();
+// }
 
-void ReaderWriterTest(){
-    ReaderWriter *buffer = new ReaderWriter;
-    Thread *r1 = new Thread("reader1");
-    Thread *r2 = new Thread("reader2");
-    Thread *w1 = new Thread("writer1");
-    r1->Fork((VoidFunctionPtr)Reader, (void *)buffer);
-    r2->Fork((VoidFunctionPtr)Reader, (void *)buffer);
-    w1->Fork((VoidFunctionPtr)Writer, (void *)buffer);
-}
+// void ReaderWriterTest(){
+//     ReaderWriter *buffer = new ReaderWriter;
+//     Thread *r1 = new Thread("reader1");
+//     Thread *r2 = new Thread("reader2");
+//     Thread *w1 = new Thread("writer1");
+//     r1->Fork((VoidFunctionPtr)Reader, (void *)buffer);
+//     r2->Fork((VoidFunctionPtr)Reader, (void *)buffer);
+//     w1->Fork((VoidFunctionPtr)Writer, (void *)buffer);
+// }
 
 //----------------------------------------------------------------------
 // ThreadTest
@@ -357,9 +354,6 @@ ThreadTest()
         break;
     case 6:
         BarrierTest();
-        break;
-    case 7:
-        ReaderWriterTest();
         break;
     default:
         printf("No test specified.\n");
