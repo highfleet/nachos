@@ -91,7 +91,7 @@ Console::CheckCharAvail()
     // schedule the next time to poll for a packet
     interrupt->Schedule(ConsoleReadPoll, (int)this, ConsoleTime, 
 			ConsoleReadInt);
-
+    
     // do nothing if character is already buffered, or none to be read
     if ((incoming != EOF) || !PollFile(readFileNo))
 	return;	  
@@ -148,3 +148,4 @@ Console::PutChar(char ch)
     interrupt->Schedule(ConsoleWriteDone, (int)this, ConsoleTime,
 					ConsoleWriteInt);
 }
+  

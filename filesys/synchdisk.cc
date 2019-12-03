@@ -22,12 +22,11 @@
 // 	Disk interrupt handler.  Need this to be a C routine, because 
 //	C++ can't handle pointers to member functions.
 //----------------------------------------------------------------------
-
+ 
 static void
 DiskRequestDone (int arg)
 {
     SynchDisk* disk = (SynchDisk *)arg;
-
     disk->RequestDone();
 }
 
@@ -53,8 +52,7 @@ SynchDisk::SynchDisk(char* name)
 //	abstraction.
 //----------------------------------------------------------------------
 
-SynchDisk::~SynchDisk()
-{
+SynchDisk::~SynchDisk(){
     delete disk;
     delete lock;
     delete semaphore;
@@ -90,7 +88,7 @@ SynchDisk::ReadSector(int sectorNumber, char* data)
 void
 SynchDisk::WriteSector(int sectorNumber, char* data)
 {
-    lock->Acquire();			// only one disk I/O at a time
+    lock->Acquire();		// only one disk I/O at a time
     disk->WriteRequest(sectorNumber, data);
     semaphore->P();			// wait for interrupt
     lock->Release();

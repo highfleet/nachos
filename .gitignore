@@ -4,3 +4,4 @@ test/*
 filesys/test/big
 filesys/test/medium
 filesys/test/small
+.vscode/settings.json

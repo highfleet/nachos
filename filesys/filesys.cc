@@ -318,8 +318,7 @@ bool FileSystem::Remove(char *name, int directorySector = -1)
                 Remove(table[i].name, sector);
     }
 
-    if (sector == -1)
-    {
+    if (sector == -1){
         delete directory;
         return FALSE; // file not found
     }

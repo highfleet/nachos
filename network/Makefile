@@ -498,7 +498,7 @@ progtest.o: ../userprog/progtest.cc /usr/include/stdc-predef.h \
  ../machine/timer.h ../filesys/synchdisk.h ../machine/disk.h \
  ../threads/synch.h ../network/post.h ../machine/network.h \
  ../threads/synchlist.h ../threads/synch.h ../machine/console.h \
- ../userprog/addrspace.h
+ ../machine/synchconsole.h ../machine/console.h ../userprog/addrspace.h
 console.o: ../machine/console.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../machine/console.h ../threads/utility.h \
  ../threads/copyright.h ../threads/bool.h ../machine/sysdep.h \
@@ -522,6 +522,26 @@ console.o: ../machine/console.cc /usr/include/stdc-predef.h \
  ../machine/stats.h ../machine/timer.h ../filesys/synchdisk.h \
  ../machine/disk.h ../threads/synch.h ../network/post.h \
  ../machine/network.h ../threads/synchlist.h ../threads/synch.h
+synchconsole.o: ../machine/synchconsole.cc /usr/include/stdc-predef.h \
+ ../machine/synchconsole.h ../threads/copyright.h ../threads/utility.h \
+ ../threads/copyright.h ../threads/bool.h ../machine/sysdep.h \
+ /usr/include/stdio.h /usr/include/bits/libc-header-start.h \
+ /usr/include/features.h /usr/include/sys/cdefs.h \
+ /usr/include/bits/wordsize.h /usr/include/bits/long-double.h \
+ /usr/include/gnu/stubs.h /usr/include/gnu/stubs-32.h \
+ /usr/lib/gcc/x86_64-linux-gnu/7/include/stddef.h \
+ /usr/include/bits/types.h /usr/include/bits/typesizes.h \
+ /usr/include/bits/types/__FILE.h /usr/include/bits/types/FILE.h \
+ /usr/include/bits/libio.h /usr/include/bits/_G_config.h \
+ /usr/include/bits/types/__mbstate_t.h ../threads/stdarg.h \
+ /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
+ /usr/include/string.h /usr/include/bits/types/locale_t.h \
+ /usr/include/bits/types/__locale_t.h /usr/include/strings.h \
+ ../threads/synch.h ../threads/thread.h ../threads/utility.h \
+ ../threads/list.h ../machine/machine.h ../machine/translate.h \
+ ../machine/disk.h ../userprog/bitmap.h ../filesys/openfile.h \
+ ../userprog/addrspace.h ../filesys/filesys.h ../filesys/openfile.h \
+ ../machine/console.h
 machine.o: ../machine/machine.cc /usr/include/stdc-predef.h \
  ../threads/copyright.h ../machine/machine.h ../threads/utility.h \
  ../threads/copyright.h ../threads/bool.h ../machine/sysdep.h \

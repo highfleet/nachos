@@ -39,7 +39,7 @@ static void DiskDone(int arg) { ((Disk *)arg)->HandleInterrupt(); }
 //	   request completes 外存读写完成 的 处理函数 (Disk负责模拟该中断)
 //	"callArg" -- argument to pass the interrupt handler
 //----------------------------------------------------------------------
-
+ 
 Disk::Disk(char* name, VoidFunctionPtr callWhenDone, int callArg)
 {
     int magicNum;

@@ -58,9 +58,11 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
         int sector = freeMap->Find();
         dataSectors[i + NumFirstIndex] = sector;
 
-        for (int j = 0; j < IndexPerSector && numSector--; j++)
+        for (int j = 0; j < IndexPerSector && numSector; j++){
             secondIndex[j] = freeMap->Find();
-        
+            numSector--;
+        }
+
         synchDisk->WriteSector(sector, (char *)secondIndex);
     }
 
@@ -72,23 +74,37 @@ FileHeader::Allocate(BitMap *freeMap, int fileSize)
 //  bytes: 
 // 	在原文件长度的基础上, 文件又增长了bytes字节...
 //----------------------------------------------------------------------
+#define FreeMapSector 0
 
 bool
-FileHeader::Grow(BitMap* freeMap, int bytes){
+FileHeader::Grow(int bytes){
     int maxLength = numSectors * SectorSize;
     if(bytes+numBytes<=maxLength){
         numBytes += bytes;
         return TRUE;
     }
-    int increaseSectors = (bytes + numBytes - maxLength)/SectorSize;
-    if(freeMap->NumClear()< increaseSectors )
-        return FALSE;
 
-    // 优先分配直接索引的
-    for (; numSectors < NumFirstIndex && increaseSectors--;)
-        dataSectors[numSectors++] = freeMap->Find();
+    BitMap* freeMap = new BitMap(NumSectors);
+    OpenFile *freeMapFile = new OpenFile(FreeMapSector);
+    freeMap->FetchFrom(freeMapFile);
+
+    int increaseSectors =divRoundUp(numBytes + bytes - maxLength, SectorSize);
+    if (freeMap->NumClear() < increaseSectors)
+        return FALSE;
     
-    while(increaseSectors){
+    numBytes += bytes;
+    DEBUG('f', "File length grows %d...\n", bytes);
+    // 优先分配直接索引的
+    for (; numSectors < NumFirstIndex && increaseSectors;){
+        dataSectors[numSectors++] = freeMap->Find();
+        increaseSectors--;
+    }
+
+    while (increaseSectors){
+        if((numSectors - NumFirstIndex) % IndexPerSector == 0 )
+            // 需要开辟一张新的一级索引表
+            dataSectors[NumFirstIndex + (numSectors - NumFirstIndex) / IndexPerSector] = freeMap->Find();
+        
         int sector = dataSectors[NumFirstIndex + (numSectors - NumFirstIndex) / IndexPerSector];
         int secondIndex[IndexPerSector];
         synchDisk->ReadSector(sector, (char *)secondIndex);
@@ -96,6 +112,8 @@ FileHeader::Grow(BitMap* freeMap, int bytes){
         synchDisk->WriteSector(sector, (char *)secondIndex);
         numSectors++, increaseSectors--;
     }
+    freeMap->WriteBack(freeMapFile);
+    return TRUE;
 }
 
 //----------------------------------------------------------------------

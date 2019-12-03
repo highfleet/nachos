@@ -74,6 +74,14 @@ void MakeDir(char* name){
     fileSystem->CreateDir(name);
 }
 
+void TestDynamicGrow(){
+    fileSystem->Create("poi", 4);
+    OpenFile* poi = fileSystem->Open("poi");
+    for (int i = 0; i < 500; i++)
+        poi->Write("hello world ", 12);
+    delete poi;
+}
+
 //----------------------------------------------------------------------
 // Print
 // 	Print the contents of the Nachos file "name".

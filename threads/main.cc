@@ -63,6 +63,8 @@ extern int testnum;
 extern void ThreadTest(void), Copy(char *unixFile, char *nachosFile);
 extern void Print(char *file), PerformanceTest(void);
 extern void MakeDir(char* name), PrintDirectory(char* name);
+extern void TestDynamicGrow();
+extern void SynchConsoleTest(char* in, char* out);
 extern void StartProcess(char *file), ConsoleTest(char *in, char *out), MultiProcessTest(char *file);
 extern void MailTest(int networkID);
 
@@ -153,6 +155,9 @@ int main(int argc, char **argv)
 					   // Nachos will loop forever waiting
 					   // for console input
 		}
+		else if (!strcmp(*argv, "-sc")){
+			SynchConsoleTest(NULL, NULL);
+		}
 #endif // USER_PROGRAM
 
 #ifdef FILESYS
@@ -196,6 +201,10 @@ int main(int argc, char **argv)
 		else if (!strcmp(*argv, "-t"))
 		{ // performance test
 			PerformanceTest();
+		}
+		else if (!strcmp(*argv, "-tg"))
+		{ // dynamic grow test exc5
+			TestDynamicGrow();
 		}
 #endif // FILESYS
 

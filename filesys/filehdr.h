@@ -56,7 +56,7 @@ class FileHeader {
 
     int FileLength();			// Return the length of the file 
 					// in bytes
-    bool Grow(BitMap* bitMap, int bytes);
+    bool Grow(int bytes);
 
     void Print();			// Print the contents of the file.
 

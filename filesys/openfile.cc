@@ -37,6 +37,7 @@ OpenFile::OpenFile(int sector)
     hdr = new FileHeader;
     hdr->FetchFrom(sector);
     seekPosition = 0;
+    sectorPosition = sector;
 }
 
 //----------------------------------------------------------------------
@@ -155,11 +156,16 @@ OpenFile::WriteAt(char *from, int numBytes, int position)
     int i, firstSector, lastSector, numSectors;
     bool firstAligned, lastAligned;
     char *buf;
+			// check request
+    if ((position + numBytes) > fileLength){
+        if(!hdr->Grow(numBytes+position-fileLength))
+            // 动态文件增长失败 截断写入内容...
+            numBytes = fileLength - position;
+        hdr->WriteBack(sectorPosition);
+    }
+    if (numBytes<=0)
+        return 0;
 
-    if ((numBytes <= 0) || (position >= fileLength))
-	return 0;				// check request
-    if ((position + numBytes) > fileLength)
-	numBytes = fileLength - position;
     DEBUG('f', "Writing %d bytes at %d, from file of length %d.\n", 	
 			numBytes, position, fileLength);
 
