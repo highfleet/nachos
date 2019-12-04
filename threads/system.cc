@@ -211,6 +211,7 @@ Initialize(int argc, char **argv)
 //----------------------------------------------------------------------
 // Cleanup
 // 	Nachos is halting.  De-allocate global data structures.
+// 由Halt调用...
 //----------------------------------------------------------------------
 void
 Cleanup()

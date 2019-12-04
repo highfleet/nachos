@@ -272,7 +272,6 @@ Disk::UpdateLast(int newSector)
 {
     int rotate;
     int seek = TimeToSeek(newSector, &rotate);
-    
     if (seek != 0)
 	bufferInit = stats->totalTicks + seek + rotate;
     lastSector = newSector;

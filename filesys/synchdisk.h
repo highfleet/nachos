@@ -11,8 +11,22 @@
 #ifndef SYNCHDISK_H
 #define SYNCHDISK_H
 
+#define CACHE_SIZE 8
+
 #include "disk.h"
 #include "synch.h"
+
+
+class CacheBlock{
+public:
+  bool valid;
+  bool dirty;
+  int sector;
+  int lastUsed;
+  char data[SectorSize];
+
+  CacheBlock(){};
+};
 
 // The following class defines a "synchronous" disk abstraction.
 // As with other I/O devices, the raw physical disk is an asynchronous device --
@@ -41,6 +55,8 @@ class SynchDisk {
     void RequestDone();			// Called by the disk device interrupt
 					// handler, to signal that the
 					// current disk operation is complete.
+    int ExpelCache();
+    int FindCache(int sector);
 
   private:
     Disk *disk;		  		// Raw disk device
@@ -48,6 +64,9 @@ class SynchDisk {
 					// with the interrupt handler
     Lock *lock;		  		// Only one read/write request
 					// can be sent to the disk at a time
+    CacheBlock cache[CACHE_SIZE];
 };
+
+
 
 #endif // SYNCHDISK_H

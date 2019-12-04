@@ -153,8 +153,6 @@ FileWrite()
     }
     for (i = 0; i < FileSize; i += ContentSize) {
         numBytes = openFile->Write(Contents, ContentSize);
-        if(i==100)
-            fileSystem->Remove(FileName);
         if (numBytes < 10)
         {
             printf("Perf test: unable to write %s\n", FileName);
@@ -200,10 +198,10 @@ PerformanceTest()
     stats->Print();
     FileWrite();
     FileRead();
-    if (!fileSystem->Remove(FileName)) {
-      printf("Perf test: unable to remove %s\n", FileName);
-      return;
-    }
+    // if (!fileSystem->Remove(FileName)) {
+    //   printf("Perf test: unable to remove %s\n", FileName);
+    //   return;
+    // }
     stats->Print();
 }
 
