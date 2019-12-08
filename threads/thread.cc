@@ -64,6 +64,12 @@ Thread::Thread(char* threadName, int priorityLevel = minPriority)
 #ifdef USER_PROGRAM
     space = NULL;
     // 在StartProgress中赋值
+    // 初始化打开文件表
+    openFiles = new List();
+    OpenFile *STDIN = new OpenFile(0);
+    OpenFile *STDOUT = new OpenFile(1);
+    openFiles->SortedInsert(STDIN, 0);
+    openFiles->SortedInsert(STDOUT, 1);
 #endif
 }
 
@@ -97,6 +103,10 @@ Thread::~Thread()
 
     if (stack != NULL)
 	DeallocBoundedArray((char *) stack, StackSize * sizeof(int));
+
+#ifdef USER_PROGRAM
+    delete openFiles;
+#endif
 }
 
 //----------------------------------------------------------------------

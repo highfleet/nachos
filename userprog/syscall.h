@@ -58,13 +58,12 @@ typedef int SpaceId;
  * address space identifier
  */
 SpaceId Exec(char *name);
- 
+
 /* Only return once the the user program "id" has finished.  
  * Return the exit status.
  */
 int Join(SpaceId id); 	
  
-
 /* File system operations: Create, Open, Read, Write, Close
  * These functions are patterned after UNIX -- files represent
  * both files *and* hardware I/O devices.
@@ -107,8 +106,6 @@ int Read(char *buffer, int size, OpenFileId id);
 
 /* Close the file, we're done reading and writing to it. */
 void Close(OpenFileId id);
-
-
 
 /* User-level thread operations: Fork and Yield.  To allow multiple
  * threads to run within a user program. 

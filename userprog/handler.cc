@@ -2,6 +2,9 @@
 #include "system.h"
 #include "syscall.h"
 
+extern void StartProcess(char* filename);
+
+
 int LRU(){
     int cur_min = 0x7ffffff;
     int replace = 0;
@@ -74,8 +77,9 @@ void PagefaultHandler(){
 
 }
 
-void SyscallExitHandler(){
+void Exit1(){
     printf("Thread %s exit without error.\n", currentThread->getName());
+    int exitId = machine->ReadRegister(2);
     /* 一个程序退出 执行清理工作... */
     for (int i = 0; i < machine->pageTableSize;i++){
         if(machine->pageTable[i].valid)
@@ -83,3 +87,116 @@ void SyscallExitHandler(){
     }
     currentThread->Finish();
 }
+
+//----------------------------------------------------------------------
+// System calls
+//----------------------------------------------------------------------
+
+void readString(int addr, char *data){
+    int byte;
+    for (int i = 0;; i++){
+        machine->ReadMem(addr + i, 1, &byte);
+        if((data[i] = (char)byte) == 0)
+            break;
+    }
+}
+
+void readMemory(int addr, int size, char* data){
+    int byte;
+    for (int i = 0; i < size;i++){
+        machine->ReadMem(addr + i, 1, &byte);
+        data[i] = (char)byte;
+    }
+}
+
+void writeMemory(int addr, int size, char* data){
+    for (int i = 0; i < size;i++)
+        machine->WriteMem(addr + i, 1, (int)data[i]);
+}
+
+#define MAX_NAME_LEN 100
+void Open1(){
+    int nameAddr = machine->ReadRegister(4);
+    char name[MAX_NAME_LEN];
+    readString(nameAddr, name);
+    OpenFileId fd = OpenForReadWrite(name, TRUE);
+    //printf("file %s opened as fd %d\n", name, fd);
+    OpenFile *file = new OpenFile(fd);
+    currentThread->openFiles->SortedInsert((void *)file, fd);
+    machine->WriteRegister(2, fd);
+}
+
+void Create1(){
+    int nameAddr = machine->ReadRegister(4);
+    char name[MAX_NAME_LEN];
+    readString(nameAddr, name);
+    OpenFileId fd = OpenForWrite(name);
+    Close(fd);
+}
+
+void Write1(){
+    int bufferAddr = machine->ReadRegister(4);
+    int size = machine->ReadRegister(5);
+    char* buffer = new char[size];
+    readMemory(bufferAddr, size, buffer);
+    OpenFileId fd = machine->ReadRegister(6);
+    if(fd>1){
+        OpenFile *file = (OpenFile*)currentThread->openFiles->Find(fd);
+        //printf("Writing %s to fd %d\n", buffer, fd);
+        file->Write(buffer, size);
+    }
+    else WriteFile(fd, buffer, size);
+}
+
+void Read1(){
+    int bufferAddr = machine->ReadRegister(4);
+    int size = machine->ReadRegister(5);
+    char* buffer = new char[size];
+    OpenFileId fd = machine->ReadRegister(6);
+    OpenFile *file = (OpenFile*)currentThread->openFiles->Find(fd);
+    file->Read(buffer, size);
+    writeMemory(bufferAddr, size, buffer);
+}
+
+void Close1(){
+    OpenFileId fd = machine->ReadRegister(4);
+    //printf("Closing fd %d\n", fd);
+    OpenFile *file = (OpenFile *)currentThread->openFiles->Find(fd);
+    delete file;
+    currentThread->openFiles->Remove(file);
+}
+
+void Exec1(){
+    int nameAddr = machine->ReadRegister(4);
+    char* name = new char[MAX_NAME_LEN];
+    readString(nameAddr, name);
+    Thread *t = new Thread("SYSCALL_EXEC");
+    //printf("Exec called: exec %s\n", name);
+    t->Fork((VoidFunctionPtr)StartProcess, name);
+    machine->WriteRegister(2, t->getTid());
+}
+
+void fork_init(int pc){
+    //currentThread->RestoreUserState();
+    currentThread->space->RestoreState();
+    machine->WriteRegister(PCReg, pc);
+    machine->WriteRegister(NextPCReg, pc + 4);
+    machine->Run();
+}
+
+void Fork1(){
+    int funcPeta = machine->ReadRegister(4);
+    Thread *t = new Thread("SYSCALL_FORK");
+    t->space = new AddrSpace(currentThread->space);
+    //t->SaveUserState(); // 寄存器状态相同 tricky (*^▽^*)
+    t->Fork((VoidFunctionPtr)fork_init, (void *)funcPeta);
+}
+
+void Join1(){
+    SpaceId id = machine->ReadRegister(4);
+    while(TidPool[id])
+        currentThread->Yield();
+}
+
+void Yield1(){  currentThread->Yield();}
+

@@ -566,6 +566,14 @@ Machine::OneInstruction(Instruction *instr)
     registers[NextPCReg] = pcAfter;             // 
 }
 
+void
+Machine::PCAdvance(){
+    registers[PrevPCReg] = registers[PCReg];	// for debugging, in case we
+						// are jumping into lala-land
+    registers[PCReg] = registers[NextPCReg];
+    registers[NextPCReg] +=4;     
+}
+
 //----------------------------------------------------------------------
 // Machine::DelayedLoad
 // 	Simulate effects of a delayed load.

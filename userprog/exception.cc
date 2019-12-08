@@ -49,22 +49,59 @@
 //	"which" is the kind of exception.  The list of possible exceptions 
 //	are in machine.h.
 //----------------------------------------------------------------------
-
+ 
 void
 ExceptionHandler(ExceptionType which)
 {
     int type = machine->ReadRegister(2);
 
-    if ((which == SyscallException) && (type == SC_Halt)) {
-        DEBUG('a', "Shutdown, initiated by user program.\n");
-        interrupt->Halt();
-    } 
-    else if((which == SyscallException) && (type == SC_Exit)) {
-        DEBUG('a', "Exit called by user program.\n");
-        SyscallExitHandler();
+
+    if(which == SyscallException){
+
+        if(type == SC_Exit) {
+            DEBUG('a', "Exit called by user program.\n");
+            Exit1();
+        }
+        if(type == SC_Open) {
+            DEBUG('a', "Open called by user program.\n");
+            Open1();
+        }
+        if(type == SC_Close){
+            DEBUG('a', "Close called by user program.\n");
+            Close1();
+        }
+        if(type == SC_Read) {
+            DEBUG('a', "Read called by user program.\n");
+            Read1();
+        }
+        if(type == SC_Write) {
+            DEBUG('a', "Write called by user program.\n");
+            Write1();
+        }
+        if(type == SC_Exec) {
+            DEBUG('a', "Exec called by user program.\n");
+            Exec1();
+        }
+        if(type == SC_Fork) {
+            DEBUG('a', "Fork called by user program.\n");
+            Fork1();
+        }
+        if(type == SC_Join) {
+            DEBUG('a', "Join called by user program.\n");
+            Join1();
+        }
+        if(type == SC_Yield) {
+            DEBUG('a', "Yield called by user program.\n");
+            Yield1();
+        }
+        if(type == SC_Halt) {
+            DEBUG('a', "Shutdown, initiated by user program.\n");
+            interrupt->Halt();
+        }
+        machine->PCAdvance();
     }
     else if (which == PageFaultException){
-        PagefaultHandler();
+            PagefaultHandler();
     }
     else {
         printf("Unexpected user mode exception %d %d\n", which, type);

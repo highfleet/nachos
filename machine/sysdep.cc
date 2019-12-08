@@ -156,7 +156,7 @@ OpenForWrite(char *name)
 {
     // O_TRUNC: 若可写 则文件清零
     int fd = open(name, O_RDWR|O_CREAT|O_TRUNC, 0666);
-
+    printf("Creating file %s...\n", name);
     ASSERT(fd >= 0); 
     return fd;
 }

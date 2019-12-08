@@ -42,7 +42,7 @@
 					// simplicity
 
 #define NumPhysPages    32
-#define NumSwapPages	1
+#define NumSwapPages	64
 #define MemorySize 	(NumPhysPages * PageSize)
 #define TLBSize		4		// if there is a TLB, make it small
 
@@ -61,6 +61,8 @@ enum ExceptionType { NoException,           // Everything ok!
 		     
 		     NumExceptionTypes
 };
+
+typedef unsigned int uint;
 
 // User program CPU state.  The full set of MIPS registers, plus a few
 // more because we need to be able to start/stop a user program between
@@ -156,14 +158,17 @@ class Machine {
 				// system call or other exception.  
 
     void Debugger();		// invoke the user program debugger
-    void DumpState();		// print the user CPU and memory state 
+    void DumpState();		// print the user CPU and memory state
 
+    void PCAdvance();   // PC+=4 一般用于系统调用结束
 
-// Data structures -- all of these are accessible to Nachos kernel code.
-// "public" for convenience.
-//
-// Note that *all* communication between the user program and the kernel 
-// are in terms of these data structures.
+    //     void ReadMemory(int addr, uint length, char *data);
+    //     void WriteMemory(int addr, uint length, char *data);
+    // Data structures -- all of these are accessible to Nachos kernel code.
+    // "public" for convenience.
+    //
+    // Note that *all* communication between the user program and the kernel
+    // are in terms of these data structures.
 
     char *mainMemory;		// physical memory to store user program,
 				// code and data, while executing

@@ -31,13 +31,15 @@ StartProcess(char *filename)
 	printf("Unable to open file %s\n", filename);
 	return;
     }
+
+    //delete[] filename;
     space = new AddrSpace(executable);    
     currentThread->space = space;   // 已经帮我做了...?
     currentThread->executable = executable;
 
     //delete executable;			// close file
 
-    space->InitRegisters();		// set the initial register values
+    space->InitRegisters();		// set the initial register values, 将PC设为0.
     
     // Restore State 本来是为上下文切换准备的...
     space->RestoreState();		// load page table register
@@ -108,7 +110,7 @@ StartProcess1(int arg){
 void
 MultiProcessTest(char* filename){
     Thread *Test = new Thread("userprog");
-    Test->Fork((VoidFunctionPtr)StartProcess1, filename);
+    Test->Fork((VoidFunctionPtr)StartProcess, filename);
     StartProcess(filename);
 
 }
