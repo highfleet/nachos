@@ -139,8 +139,6 @@ ThreadTest4()
 #ifdef SEM
 // 信号量实现的生产者-消费者
 class Buffer{
-
-
     Semaphore *mutex, *full, *empty;
 public:
     Buffer(){
@@ -148,12 +146,11 @@ public:
         full = new Semaphore("full", BUFFER_CAPACITY);
         empty = new Semaphore("empty", 0);
     }
-
     void Consume(){
         empty->P();
         mutex->P();
         // Take
-        printf("Take from buffer...\n");
+
         mutex->V();
         full->V();
     }
@@ -162,7 +159,7 @@ public:
         full->P();
         mutex->P();
         // Write
-        printf("Write to buffer...\n");
+
         mutex->V();
         empty->V();
     }
@@ -329,6 +326,32 @@ public:
 // }
 
 //----------------------------------------------------------------------
+// 消息队列
+//----------------------------------------------------------------------
+
+void receiver(int arg){
+    Message *msg = new Message();
+    int cnt = 0;
+    while (cnt<=100){
+        if(Receive(msg, -1)){
+            printf("New message arrived: %s\n", msg->msg);
+            cnt++;
+        }
+    }
+}
+
+void testIPC(){
+    Thread *t = new Thread("rcv");
+    t->Fork(receiver, 0);
+    char content[30];
+    for (int i = 0; i <= 100; i++){
+        sprintf(content, "hello world %d", i);
+        Message *msg = new Message(16, content);
+        Send(msg, t->getTid());
+    }
+}
+
+//----------------------------------------------------------------------
 // ThreadTest
 // 	Invoke a test routine.
 //----------------------------------------------------------------------
@@ -354,6 +377,9 @@ ThreadTest()
         break;
     case 6:
         BarrierTest();
+        break;
+    case 7:
+        testIPC();
         break;
     default:
         printf("No test specified.\n");

@@ -134,7 +134,7 @@ AddrSpace::AddrSpace(OpenFile *executable)
 //     }
 
     // 以页为单位 将可执行文件依次加载到内存...
-    if(noffH.code.size + noffH.initData.size >0){
+    if(noffH.code.size + noffH.initData.size > 0){
         DEBUG('a', "Initializing code segment, at 0x%x, size %d\n", 
  			noffH.code.virtualAddr, noffH.code.size);
         int sizeRemain = noffH.code.size + noffH.initData.size;
@@ -149,24 +149,6 @@ AddrSpace::AddrSpace(OpenFile *executable)
             sizeRemain -= writeSize, filePtr += writeSize, virtPage++;
         }
     }
-
-    // if(noffH.initData.size>0){
-    //     DEBUG('a', "Initializing data segment, at 0x%x, size %d\n", 
- 	// 		noffH.initData.virtualAddr, noffH.initData.size);
-    //     int sizeRemain = noffH.initData.size;
-    //     int virtPage = noffH.initData.virtualAddr/PageSize;   //物理内存的页号
-    //     int filePtr = noffH.initData.inFileAddr;
-    //     while(sizeRemain){
-    //         int writeSize = min(PageSize, sizeRemain); 
-    //         if(pageTable[virtPage].fileAddr==-1)
-    //             pageTable[virtPage].fileAddr = filePtr;    // 记录在文件中的位置 以备日后取用
-    //         int physPage = pageTable[virtPage].physicalPage;
-    //         if(pageTable[virtPage].valid)
-    //             executable->ReadAt(machine->mainMemory + physPage * PageSize, writeSize, filePtr);
-    //         sizeRemain -= writeSize, filePtr+=writeSize, virtPage++;
-    //     }
-    // }
-
 }
 
 //----------------------------------------------------------------------
@@ -225,8 +207,7 @@ void AddrSpace::SaveState()
 {   
     if (machine->tlb!=NULL)
         for (int i = 0; i < TLBSize;i++)
-            machine->tlb[i].valid = false;
-        
+            machine->tlb[i].valid = false;       
 }
 
 //----------------------------------------------------------------------
@@ -242,3 +223,4 @@ void AddrSpace::RestoreState()
     machine->pageTable = pageTable;
     machine->pageTableSize = numPages;
 }
+

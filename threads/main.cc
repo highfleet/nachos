@@ -96,7 +96,7 @@ int main(int argc, char **argv)
 	// 初始化操作系统!
 	(void)Initialize(argc, argv);
 
-#ifdef THREADST
+#ifdef THREADS
 	//	增加了TS命令参数...
 	for (argc--, argv++; argc > 0; argc -= argCount, argv += argCount)
 	{

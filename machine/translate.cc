@@ -82,7 +82,7 @@ void SwapoutPage(int page){
     ASSERT(store >= 0);
     machine->swapSpace->WriteAt(machine->mainMemory + page * PageSize, PageSize, store * PageSize);
 }
-
+ 
 //----------------------------------------------------------------------
 // 获取页面 
 // 优先获取空闲页面

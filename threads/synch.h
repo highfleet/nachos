@@ -135,7 +135,10 @@ class Condition {
     char* name;
     List *queue;
 };
-
+ 
+//----------------------------------------------------------------------
+// Synch console implementation
+//----------------------------------------------------------------------
 class ReaderWriter{
     int readerCnt;
     Lock *reader, *mutex;
@@ -175,6 +178,8 @@ public:
     
 };
 
+
+
 class OpenFileEntry{
 public:
 	int sector;
@@ -189,6 +194,47 @@ public:
 	}
 };
 
+//----------------------------------------------------------------
+// message list implementation...
+//----------------------------------------------------------------
+#define BUFFER_SIZE 10
+
+
+struct Message{
+  int len;
+  char msg[100];
+  Message(){}
+  Message(int size, char* from):len(size){
+    memcpy(msg, from, size);}
+};
+
+struct MsgType{
+public:
+  bool valid;
+  Message msg;
+  MsgType() { valid = false; }
+};
+
+class MsgQueue{
+public:
+  MsgQueue();
+  Message* addQueue(Message* msg, int from);
+  void rcvQueue(Message* msg);
+
+private:
+  Semaphore *buf_empty, *buf_full;
+  Lock *mutex;
+  MsgType *buffer;
+};
+
+class MsgList{
+public:
+  MsgList();
+  void addList(Message *item, int from);
+  Message* rcvMsg(int from = -1);  
+private:
+  Lock *mutex;
+  List *list;
+};
 
 #endif // SYNCH_H
-

@@ -10,6 +10,7 @@
 
 #include "copyright.h"
 #include "system.h"
+#include "synch.h"
 
 int currentThreadNum;
 // 距离上次时钟打断 已经过了多久？
@@ -170,8 +171,7 @@ Initialize(int argc, char **argv)
     for (int i = 0; i < MaxThreadNum;i++)
         TidPool[i] = 0;
     currentThreadNum = 0;
-
-   
+    msgQueue = new MsgQueue();
 
     // We didn't explicitly allocate the current thread we are running in.
     // But if it ever tries to give up the CPU, we better have a Thread

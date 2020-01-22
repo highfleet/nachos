@@ -59,9 +59,7 @@
 char* getName(char* path){
     char *name = strrchr(path, '/');
     return name == NULL ? path : name + 1;
-    
 }
-
 
 //----------------------------------------------------------------------
 // FileSystem::FileSystem
@@ -127,8 +125,9 @@ FileSystem::FileSystem(bool format)
         // to hold the file data for the directory and bitmap.
 
         DEBUG('f', "Writing bitmap and directory back to disk.\n");
+        // bitmap 和 dir 包装了WriteAt 按照索引将文件写回磁盘
         freeMap->WriteBack(freeMapFile); // flush changes to disk
-        directory->WriteBack(directoryFile);
+        directory->WriteBack(directoryFile);    
 
         if (DebugIsEnabled('f'))
         {
@@ -145,7 +144,7 @@ FileSystem::FileSystem(bool format)
     {
         // if we are not formatting the disk, just open the files representing
         // the bitmap and directory; these are left open while Nachos is running
-        // 创建openfile 不改变hdr内容
+        // 打开openfile 不改变hdr内容
         freeMapFile = new OpenFile(FreeMapSector);
         directoryFile = new OpenFile(DirectorySector);
     }
@@ -168,10 +167,10 @@ FileSystem::FileSystem(bool format)
 //	Return TRUE if everything goes ok, otherwise, return FALSE.
 //
 // 	Create fails if:
-//   		file is already in directory
-//	 	no free space for file header
-//	 	no free entry for file in directory
-//	 	no free space for data blocks for the file
+//   	1 file is already in directory
+//	 	2 no free space for file header
+//	 	3 no free entry for file in directory
+//	 	4 no free space for data blocks for the file
 //
 // 	Note that this implementation assumes there is no concurrent access
 //	to the file system!

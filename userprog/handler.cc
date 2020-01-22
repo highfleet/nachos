@@ -32,7 +32,7 @@ void PagefaultHandler(){
         // 唔 这是一个正经的缺页错误
         // 不管是不是TLB产生的 首先检查是否已经失效
         // 如果已经失效 那必定不再TLB中
-        DEBUG('a', "*** Pagefault! Bad vpn %d\n", vpn);
+        DEBUG('a', "F*** Pagefault! Bad vpn %d\n", vpn);
         stats->numPageFaults++;
         int swapPhysPage = GetPage(machine->pageTable + vpn);
         // DEBUG('a', "Chose sacrifice page %d\n", swapPhysPage);

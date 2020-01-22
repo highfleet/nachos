@@ -173,3 +173,62 @@ void Condition::Broadcast(Lock* conditionLock)
 }
 
 
+//----------------------------------------------------------------
+// message list implementation...
+//----------------------------------------------------------------
+
+MsgList::MsgList(){
+    list = new List();
+    mutex = new Lock("list mutex");
+}
+
+void MsgList::addList(Message* item, int from){
+    mutex->Acquire();
+    list->SortedInsert((void* )item, from);
+    mutex->Release();
+}
+
+Message* MsgList::rcvMsg(int from=-1){
+    mutex->Acquire();
+    Message *ret;
+    if (from < 0)
+        ret =  (Message*)list->Remove();
+    else
+        ret =  (Message*)list->Find(from);
+    mutex->Release();
+    return ret;
+}
+
+MsgQueue::MsgQueue(){
+    buffer = new MsgType[BUFFER_SIZE];
+    buf_empty = new Semaphore("empty", BUFFER_SIZE);
+    //buf_full = new Semaphore("full", 0);
+    mutex = new Lock("mutex");
+}
+
+Message* MsgQueue::addQueue(Message* msg, int from){
+    buf_empty->P();
+    Message *ret;
+    mutex->Acquire();
+    for (int i = 0; i < BUFFER_SIZE;i++)
+        if(!buffer[i].valid){
+            buffer[i].msg = *msg;
+            ret = &buffer[i].msg;
+            buffer[i].valid = true;
+            break;
+        }
+    mutex->Release();
+    return ret;
+}
+
+void MsgQueue::rcvQueue(Message* msg){
+    mutex->Acquire();
+    for (int i = 0; i < BUFFER_SIZE;i++)
+        if(&(buffer[i].msg) == msg){
+            buf_empty->V();
+            buffer[i].valid = FALSE;
+            break;
+        }
+    mutex->Release();
+}
+

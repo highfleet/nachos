@@ -60,6 +60,11 @@
   #define maxPriority 0
   #define minPriority 5
 
+  // 外部声明 定义在Synch中
+  class MsgList;
+  class MsgQueue;
+  class Message;
+
   // 进程的四个状态
   // Thread state
   enum ThreadStatus { JUST_CREATED, RUNNING, READY, BLOCKED, SUSPENDED };
@@ -69,6 +74,10 @@
   extern void ThreadPrint(int arg);
   extern void ThreadPrintInfo(int ptr);
   extern void Wakeup(void* t);
+  extern MsgQueue *msgQueue;
+
+  bool Send(Message *msg, int dest);
+  bool Receive( Message *msg, int src = -1);
 
   // The following class defines a "thread control block" -- which
   // represents a single thread of execution.
@@ -80,6 +89,7 @@
   //    
   //  Some threads also belong to a user address space; threads
   //  that only run in the kernel have a NULL address space.
+
 
   class Thread {
     private:
@@ -143,12 +153,14 @@
             // (If NULL, don't deallocate stack)
       ThreadStatus status;		// ready, running or blocked
       char* name;
+      MsgList *msgList;
 
       void StackAllocate(VoidFunctionPtr func, void *arg);
                 // Allocate a stack for thread.
             // Used internally by Fork()
 
       int TidAllocate();
+      
 
   #ifdef USER_PROGRAM
   // A thread running a user program actually has *two* sets of CPU registers -- 
@@ -165,6 +177,7 @@
       AddrSpace *space;			// User code this thread is running.
       OpenFile *executable;
       List *openFiles;
+      
 #endif
   };
 

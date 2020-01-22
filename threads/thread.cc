@@ -23,14 +23,14 @@
 #define STACK_FENCEPOST 0xdeadbeef	// this is put at the top of the
 					// execution stack, for detecting 
 					// stack overflows
-
+MsgQueue *msgQueue;
 //----------------------------------------------------------------------
 // Thread::Thread
 // 	Initialize a thread control block, so that we can then call
 //	Thread::Fork.
 //
 //	"threadName" is an arbitrary string, useful for debugging.
-//  
+//
 //  Lab1
 //  分配TID
 //  Lab2
@@ -60,6 +60,7 @@ Thread::Thread(char* threadName, int priorityLevel = minPriority)
 
     // 将此进程添加到所有进程表里...
     scheduler->AllThreads->SortedInsert((void *)this, tid);
+    msgList = new MsgList;
 
 #ifdef USER_PROGRAM
     space = NULL;
@@ -276,7 +277,7 @@ Thread::Yield ()
     // 导致进程运行时间比时钟中断周期长 -10Ticks
     (void) interrupt->SetLevel(oldLevel);
     // 回归的每个线程都要打开中断
-    // 新线程的打开中断在StartUpPc中
+    // 新线程的打开中断在StartUpPC中
 }
 
 
@@ -494,5 +495,24 @@ Thread::setPriority(int val)
 
     priority = val;
     return 0;
+}
+
+bool Send(Message *msg, int dest){
+    Thread *destThread = (Thread*)scheduler->AllThreads->Find(dest);
+    if(destThread ==NULL)
+        return FALSE;
+    Message *item = msgQueue->addQueue(msg, currentThread->getTid());
+    destThread->msgList->addList(item, currentThread->getTid());
+    return TRUE;
+}
+
+bool Receive( Message *msg, int src = -1){
+    MsgList *list = currentThread->msgList;
+    Message* item = list->rcvMsg(src);
+    if(item==NULL)
+        return FALSE;
+    memcpy(msg->msg, item->msg, item->len);
+    msgQueue->rcvQueue(item);
+    return TRUE;
 }
 
